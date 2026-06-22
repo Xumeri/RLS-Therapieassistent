@@ -1,100 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:flutterapp/dio_setup.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../data/evaluation_repository.dart';
+import '../domain/data_point.dart';
 
 
-/// DATENMODELL
-class DiagrammPunkt {
-  final DateTime datetime;        // Zeitpunkt der Antwort
-  final double score;             // berechneter Score (y-Wert im Diagramm)
-  final String interpretation;    // Text für die Liste (optional)
-  final double maxScore;          // Maximaler Score (für Diagramm-Skalierung + Anzeige)
 
-  DiagrammPunkt({
-    required this.datetime,
-    required this.score,
-    required this.interpretation,
-    required this.maxScore,
-  });
-
-  /// Wandelt JSON vom Backend in ein DiagrammPunkt-Objekt um
-  factory DiagrammPunkt.fromJson(Map<String, dynamic> json) {
-    return DiagrammPunkt(
-      datetime: DateTime.parse(json['date'] as String),            
-      score: double.parse(json['score'].toString()),                   
-      interpretation: (json['interpretation'] ?? '').toString(),       
-      maxScore: double.parse(json['maxscore'].toString()),            
-    );
-  }
-}
-
-// -------------------- Holt Diagrammdaten von Django --------------------------------------------------------------
-Future<List<DiagrammPunkt>> lade_diagrammdaten(String fragebogenId) async {
-  List diagramm_items = [];  //leere Liste diagrammitems
-  final response = await dio.get("/rls/diagramm/$fragebogenId"); //get request an Django
-    if (response.statusCode == 200) {  //Wenn Request erfolgreich....
-      diagramm_items = response.data;  //speichert Daten von Django in Liste
-    } else {
-      print('Fehler beim Laden der Diagrammdaten');
-  }
-  // Nutzt Diagrammpunkt factory um aus den Daten in der Liste Diagrammpunkte zu machen
-  final points = diagramm_items.map((e) => DiagrammPunkt.fromJson(e as Map<String,dynamic>)).toList();
-  // gibt die Diagrammpunkte zurück
-  return points;
-}
-
-
-//KPI-Berechnung: Durchschnitt der letzten 7 Kalendertage
-double avgLast7Days(List<DiagrammPunkt> points) {
-  if (points.isEmpty) return 0;
-
-  final now = DateTime.now();
-
-  // Start: heute minus 6 Tage (inkl. heute = 7 Tage insgesamt)
-  final startOfWeek = DateTime(now.year, now.month, now.day)
-      .subtract(const Duration(days: 6));
-
-  // Filter: nur Einträge innerhalb der letzten 7 Tage
-  final weekPoints = points
-      .where((p) => !p.datetime.isBefore(startOfWeek) && !p.datetime.isAfter(now))
-      .toList();
-
-  if (weekPoints.isEmpty) return 0;
-
-  final sum = weekPoints.fold<double>(0, (acc, p) => acc + p.score);
-  return sum / weekPoints.length;
-}
-//Fasst mehrere Einträge eines Tages zu einem Tagesdurchschnitt zusammen
-List<DiagrammPunkt> aggregateDailyAverage(List<DiagrammPunkt> points) {
-  final Map<DateTime, List<DiagrammPunkt>> grouped = {};
-  // Einträge nach Kalendertag gruppieren 
-  for (final p in points) {
-    final day = DateTime(p.datetime.year, p.datetime.month, p.datetime.day);
-    grouped.putIfAbsent(day, () => []).add(p);
-  }
-  // Für jeden Tag einen Durchschnittspunkt erzeugen
-  final dailyPoints = grouped.entries.map((entry) {
-    final day = entry.key;
-    final list = entry.value;
-
-    final avg =
-        list.fold<double>(0, (sum, p) => sum + p.score) / list.length;
-
-    return DiagrammPunkt(
-      datetime: day,
-      score: avg,
-      interpretation: 'Ø Tageswert (${list.length} Einträge)',
-      maxScore: list.first.maxScore,
-    );
-  }).toList();
-//sortieren
-  dailyPoints.sort((a, b) => a.datetime.compareTo(b.datetime));
-  return dailyPoints;
-}
 //SCREEN: Tabs + KPI-Zeile oben
 
 class AuswertungTagebuchScreen extends StatelessWidget {
   const AuswertungTagebuchScreen({super.key});
+
 
   @override
   Widget build(BuildContext context) {
@@ -147,41 +63,18 @@ class AuswertungTagebuchScreen extends StatelessWidget {
 }
 
 //KPI-ROW: lädt Daten und zeigt Durchschnitt
-class KpiRow extends StatelessWidget {
+class KpiRow extends ConsumerWidget {
   const KpiRow({super.key});
 
-  /// Lädt die Daten und berechnet KPI-Strings
-  Future<Map<String, String>> _loadKpis() async {
-    // Daten aus Backend holen (über lade_diagrammdaten)
-    final sleep = await lade_diagrammdaten('tschlaf');
-    final nutrition = await lade_diagrammdaten('ternaehrung'); 
-    final wellbeing = await lade_diagrammdaten('twohlbefinden');
-    final sport = await lade_diagrammdaten('tsport');
 
-    // Durchschnitt der letzten 7 Tage berechnen
-    final sleepAvg = avgLast7Days(sleep);
-    final nutritionAvg = avgLast7Days(nutrition);
-    final wellbeingAvg = avgLast7Days(wellbeing);
-    final sportAvg = avgLast7Days(sport);
-
-    // MaxScore (für Anzeige "x / max")
-    final sleepMax = sleep.isNotEmpty ? sleep.first.maxScore : 5.0;
-    final nutritionMax = nutrition.isNotEmpty ? nutrition.first.maxScore : 5.0;
-    final wellbeingMax = wellbeing.isNotEmpty ? wellbeing.first.maxScore : 5.0;
-    final sportMax = sport.isNotEmpty ? sport.first.maxScore : 5.0;
-
-    return {
-      'sleep': '${sleepAvg.toStringAsFixed(1)} / ${sleepMax.toStringAsFixed(0)}',
-      'nutrition': '${nutritionAvg.toStringAsFixed(1)} / ${nutritionMax.toStringAsFixed(0)}',
-      'wellbeing': '${wellbeingAvg.toStringAsFixed(1)} / ${wellbeingMax.toStringAsFixed(0)}',
-      'sport': '${sportAvg.toStringAsFixed(1)} / ${sportMax.toStringAsFixed(0)}',
-    };
-  }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+
+    final repo = ref.read(evaluationRepositoryProvider);
+
     return FutureBuilder<Map<String, String>>(
-      future: _loadKpis(),
+      future: repo.loadKpis(),
       builder: (context, snapshot) {
         // Laden
         if (snapshot.connectionState != ConnectionState.done) {
@@ -216,7 +109,7 @@ class KpiRow extends StatelessWidget {
               Container(
                 child: GridView.count(
                   shrinkWrap: true,  //Reihe mit den Karten darf nur so hoch sein wie ihr Inhalt
-                  crossAxisCount: 4, 
+                  crossAxisCount: 4,
                   physics: const NeverScrollableScrollPhysics(),
                   crossAxisSpacing: 6,
                   mainAxisSpacing: 6,
@@ -273,9 +166,10 @@ class KpiCard extends StatelessWidget {
 }
 
 //TAB: lädt Daten für bestimmte Kategorie und zeigt Liniendiagramm und Liste (Datum + Interpretation + Score)
-class EvaluationTab extends StatelessWidget {
+class EvaluationTab extends ConsumerWidget {
   final String title;
   final String fragebogenId;
+
 
   const EvaluationTab({
     super.key,
@@ -284,9 +178,10 @@ class EvaluationTab extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final repo = ref.read(evaluationRepositoryProvider);
     return FutureBuilder<List<DiagrammPunkt>>(
-      future: lade_diagrammdaten(fragebogenId),
+      future: repo.fetchData(fragebogenId),
       builder: (context, snapshot) {
         // Laden
         if (snapshot.connectionState != ConnectionState.done) {
@@ -310,7 +205,7 @@ class EvaluationTab extends StatelessWidget {
         // Sortierung nach Datum
         points.sort((a, b) => a.datetime.compareTo(b.datetime));
 
-        final dailyPoints = aggregateDailyAverage(points);
+        final dailyPoints = aggrDailyAverage(points);
         // Startdatum fürs Diagramm (erstes Tagesdatum)
         final start = DateTime(
           dailyPoints.first.datetime.year,
@@ -322,11 +217,11 @@ class EvaluationTab extends StatelessWidget {
           final d = DateTime(p.datetime.year, p.datetime.month, p.datetime.day);
           final x = d.difference(start).inDays.toDouble();
           return FlSpot(x, p.score);
-          }).toList();
+        }).toList();
 
         // Für Achse: minX/maxX setzen
-          final minX = spots.first.x;
-          final maxX = spots.last.x;
+        final minX = spots.first.x;
+        final maxX = spots.last.x;
 
         return ListView(
           padding: const EdgeInsets.all(16),
@@ -340,7 +235,7 @@ class EvaluationTab extends StatelessWidget {
               height: 220,
               child: LineChart(
                 LineChartData(
-                  minX: minX,          
+                  minX: minX,
                   maxX: maxX,
                   minY: 0,
                   maxY: maxScore,

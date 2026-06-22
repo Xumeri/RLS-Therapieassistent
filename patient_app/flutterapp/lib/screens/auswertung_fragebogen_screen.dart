@@ -1,84 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:flutterapp/dio_setup.dart';
+import '../application/evaluation_provider.dart';
+import '../domain/data_point.dart';
 
+import 'package:flutter/widget_previews.dart';
 
-/// DATENMODELL
-class DiagrammPunkt {
-  final DateTime datetime;        // Zeitpunkt der Antwort
-  final double score;             // berechneter Score (y-Wert im Diagramm)
-  final String interpretation;    // Text für die Liste (optional)
-  final double maxScore;          // Maximaler Score (für Diagramm-Skalierung + Anzeige)
-
-  DiagrammPunkt({
-    required this.datetime,
-    required this.score,
-    required this.interpretation,
-    required this.maxScore,
-  });
-
-  /// Wandelt JSON vom Backend in ein DiagrammPunkt-Objekt um
-  factory DiagrammPunkt.fromJson(Map<String, dynamic> json) {
-    return DiagrammPunkt(
-      datetime: DateTime.parse(json['date'] as String),            
-      score: double.parse(json['score'].toString()),                   
-      interpretation: (json['interpretation'] ?? '').toString(),       
-      maxScore: double.parse(json['maxscore'].toString()),            
-    );
-  }
-}
-
-// -------------------- Holt Diagrammdaten von Django --------------------------------------------------------------
-Future<List<DiagrammPunkt>> lade_diagrammdaten(String fragebogenId) async {
-  List diagramm_items = [];  //leere Liste diagrammitems
-  final response = await dio.get("/rls/diagramm/$fragebogenId"); //get request an Django
-    if (response.statusCode == 200) {  //Wenn Request erfolgreich....
-      diagramm_items = response.data;  //speichert Daten von Django in Liste
-    } else {
-      print('Fehler beim Laden der Diagrammdaten');
-  }
-  // Nutzt Diagrammpunkt factory um aus den Daten in der Liste Diagrammpunkte zu machen
-  final points = diagramm_items.map((e) => DiagrammPunkt.fromJson(e as Map<String,dynamic>)).toList();
-  // gibt die Diagrammpunkte zurück
-  return points;
-}
-
-
-//gibt den Score des aktuellsten ausgefüllten Fragebogens zurück
-double neuesterScore(List<DiagrammPunkt> points) {
-  if (points.isEmpty) return 0;
-  return points.first.score;
-}
-
-//Fasst mehrere Einträge eines Tages zu einem Tagesdurchschnitt zusammen
-List<DiagrammPunkt> aggregateDailyAverage(List<DiagrammPunkt> points) {
-  final Map<DateTime, List<DiagrammPunkt>> grouped = {};
-  // Einträge nach Kalendertag gruppieren 
-  for (final p in points) {
-    final day = DateTime(p.datetime.year, p.datetime.month, p.datetime.day);
-    grouped.putIfAbsent(day, () => []).add(p);
-  }
-  // Für jeden Tag einen Durchschnittspunkt erzeugen
-  final dailyPoints = grouped.entries.map((entry) {
-    final day = entry.key;
-    final list = entry.value;
-
-    final avg =
-        list.fold<double>(0, (sum, p) => sum + p.score) / list.length;
-
-    return DiagrammPunkt(
-      datetime: day,
-      score: avg,
-      interpretation: 'Ø Tageswert (${list.length} Einträge)',
-      maxScore: list.first.maxScore,
-    );
-  }).toList();
-//sortieren
-  dailyPoints.sort((a, b) => a.datetime.compareTo(b.datetime));
-  return dailyPoints;
-}
-//SCREEN: Tabs + KPI-Zeile oben
-
+/// Screen zur Anzeige der Auswertungsergebnisse der RLS-Fragebögen.
+///
+/// Dieser Screen bietet eine Übersicht über die zeitliche Entwicklung der
+/// Fragebogen-Scores (IRLS und RLSQoL) mithilfe von Diagrammen und KPIs.
+///
+/// ### Funktionen:
+/// - **Tabs:** Wechsel zwischen IRLS (International RLS Scale) und RLSQoL (RLS Quality of Life).
+/// - **KPI-Bereich:** Anzeige des aktuellsten Scores für beide Fragebögen im Kopfbereich.
+/// - **Diagramm:** Visualisierung des Score-Verlaufs als Liniendiagramm (Tagesdurchschnitte).
+/// - **Historie:** Auflistung aller bisherigen Antworten im unteren Bereich ("Antwortverlauf").
+///
+/// ### Datenfluss:
+/// Die Daten werden über Riverpod-Provider (`kpiDataProvider` und `diagrammDatenProvider`)
+/// bezogen, welche die `DiagrammPunkt`-Modelle aus dem Backend/Repository laden.
 class AuswertungFragebogenScreen extends StatelessWidget {
   const AuswertungFragebogenScreen({super.key});
 
@@ -129,76 +70,56 @@ class AuswertungFragebogenScreen extends StatelessWidget {
 }
 
 //KPI-ROW: lädt Daten und zeigt neuesten Score für jeden Fragebogen
-class KpiRow extends StatelessWidget {
+class KpiRow extends ConsumerWidget {
   const KpiRow({super.key});
 
-  /// Lädt die Daten und berechnet KPI-Strings
-  Future<Map<String, String>> _loadKpis() async {
-    // Daten aus Backend holen (über lade_diagrammdaten)
-    final irlsdaten = await lade_diagrammdaten('f1');
-    final rlsqoldaten = await lade_diagrammdaten('f2'); 
-
-    // Neuesten Score für jeden Fragebogen holen
-    final irlsdatenNeuester = neuesterScore(irlsdaten);
-    final rlsqoldatenNeuester = neuesterScore(rlsqoldaten);
-
-    // MaxScore (für Anzeige "x / max")
-    final irlsdatenMax = irlsdaten.isNotEmpty ? irlsdaten.first.maxScore : 5.0;
-    final rlsqoldatenMax = rlsqoldaten.isNotEmpty ? rlsqoldaten.first.maxScore : 5.0;
-
-    return {
-      'irlsdaten': '${irlsdatenNeuester.toStringAsFixed(1)} / ${irlsdatenMax.toStringAsFixed(0)}',
-      'rlsqoldaten': '${rlsqoldatenNeuester.toStringAsFixed(1)} / ${rlsqoldatenMax.toStringAsFixed(0)}',
-    };
-  }
-
   @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<Map<String, String>>(
-      future: _loadKpis(),
-      builder: (context, snapshot) {
-        // Laden
-        if (snapshot.connectionState != ConnectionState.done) {
-          return const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 12),
-            child: SizedBox(
-              height: 120,
-              child: Center(child: CircularProgressIndicator()),
-            ),
-          );
-        }
+  Widget build(BuildContext context, WidgetRef ref) {
+    final kpiAsyncValue = ref.watch(kpiDataProvider);
 
-        // Fehler
-        if (snapshot.hasError) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Text('KPI Fehler: ${snapshot.error}'),
-          );
-        }
+    return kpiAsyncValue.when(
+      loading: () => const SizedBox(
+        height: 120,
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (err, stack) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Text('KPI Fehler: $err'),
+      ),
+      data: (data){
+        final f1 = data['f1'] ?? [];
+        final f2 = data['f2'] ??  [];
 
-        // Werte anzeigen
-        final data = snapshot.data ?? {};
-        final irlsdatenText = data['irlsdaten'] ?? '—';
-        final rlsqoldatenText = data['rlsqoldaten'] ?? '—';
+        final irlsNewest = newestScore(f1);
+        final rlsqolNewest = newestScore(f2);
+
+        final irlsMax  = f1.isNotEmpty ? f1.first.maxScore : 5.0;
+        final rlsqolMax = f2.isNotEmpty ? f2.first.maxScore : 5.0;
 
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Column(
             children: [
-              Container(
-                child: GridView.count(
-                  shrinkWrap: true, //Reihe mit den Karten darf nur so hoch werden wie ihr Inhalt
-                  crossAxisCount: 2, 
-                  physics: const NeverScrollableScrollPhysics(),
-                  crossAxisSpacing: 6,
-                  mainAxisSpacing: 6,
-                  children: [
-                    KpiCard(title: 'IRLS', value: irlsdatenText),
-                    KpiCard(title: 'RLSQoL', value: rlsqoldatenText),
-                  ],
-                ),
+              GridView.count(
+                shrinkWrap: true,
+                crossAxisCount: 2,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisSpacing: 6,
+                mainAxisSpacing: 6,
+                childAspectRatio: 2.5,
+                children: [
+                  KpiCard(
+                      title: 'IRLS',
+                      value: '${irlsNewest.toStringAsFixed(1)} / ${irlsMax.toStringAsFixed(0)}'
+                  ),
+                  KpiCard(
+                      title: 'RLSQoL',
+                      value: '${rlsqolNewest.toStringAsFixed(1)} / ${rlsqolMax.toStringAsFixed(0)}'
+                  ),
+                ],
               ),
-              Text("(Score des letzten ausgefüllten Fragebogens)",)
+              const SizedBox(height: 8),
+              const  Text("Score des letzten ausgefüllten Fragebogens)"),
             ],
           ),
         );
@@ -243,8 +164,10 @@ class KpiCard extends StatelessWidget {
   }
 }
 
-//TAB: lädt Daten für bestimmte Kategorie und zeigt Liniendiagramm und Liste (Datum + Interpretation + Score)
-class EvaluationTab extends StatelessWidget {
+// -----------------------------------------------------------------------------
+// EVALUATION TAB - Verwendet ConsumerWidget
+// -----------------------------------------------------------------------------
+class EvaluationTab extends ConsumerWidget {
   final String title;
   final String fragebogenId;
 
@@ -255,63 +178,50 @@ class EvaluationTab extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<List<DiagrammPunkt>>(
-      future: lade_diagrammdaten(fragebogenId),
-      builder: (context, snapshot) {
-        // Laden
-        if (snapshot.connectionState != ConnectionState.done) {
-          return const Center(child: CircularProgressIndicator());
-        }
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Hier greifen wir auf die gecachten Daten zu!
+    final diagrammAsyncValue = ref.watch(diagrammDatenProvider(fragebogenId));
 
-        // Fehler
-        if (snapshot.hasError) {
-          return Center(child: Text('Fehler: ${snapshot.error}'));
-        }
+    return diagrammAsyncValue.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (err, stack) => Center(child: Text('Fehler: $err')),
+      data: (pointsList) {
+        // Da die Liste "final" übergeben wird, machen wir eine Kopie zum Sortieren
+        final points = List<DiagrammPunkt>.from(pointsList);
 
-        // Keine Daten
-        final points = snapshot.data ?? [];
         if (points.isEmpty) {
           return const Center(child: Text('Keine Daten vorhanden.'));
         }
 
-        // Y-Achse im Diagramm: 0..maxScore
         final maxScore = points.first.maxScore;
-
-        // Sortierung nach Datum
         points.sort((a, b) => a.datetime.compareTo(b.datetime));
+        final dailyPoints = aggrDailyAverage(points);
 
-        final dailyPoints = aggregateDailyAverage(points);
-        // Startdatum fürs Diagramm (erstes Tagesdatum)
         final start = DateTime(
           dailyPoints.first.datetime.year,
           dailyPoints.first.datetime.month,
           dailyPoints.first.datetime.day,
         );
-        // Spots: X = Tage seit Start, Y = Tagesdurchschnitt
+
         final spots = dailyPoints.map((p) {
           final d = DateTime(p.datetime.year, p.datetime.month, p.datetime.day);
           final x = d.difference(start).inDays.toDouble();
           return FlSpot(x, p.score);
-          }).toList();
+        }).toList();
 
-        // Für Achse: minX/maxX setzen
-          final minX = spots.first.x;
-          final maxX = spots.last.x;
+        final minX = spots.first.x;
+        final maxX = spots.last.x;
 
         return ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            Text(title,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
-
-            // --------------------- Diagramm Erstellung ----------------------------------------------------
             SizedBox(
               height: 220,
               child: LineChart(
                 LineChartData(
-                  minX: minX,          
+                  minX: minX,
                   maxX: maxX,
                   minY: 0,
                   maxY: maxScore,
@@ -341,12 +251,10 @@ class EvaluationTab extends StatelessWidget {
                             dailyPoints.first.datetime.month,
                             dailyPoints.first.datetime.day,
                           );
-
                           final date = startDate.add(Duration(days: value.toInt()));
                           final label =
                               '${date.day.toString().padLeft(2, '0')}.'
                               '${date.month.toString().padLeft(2, '0')}';
-
                           return Padding(
                             padding: const EdgeInsets.only(top: 8),
                             child: Text(
@@ -393,20 +301,13 @@ class EvaluationTab extends StatelessWidget {
                 ),
               ),
             ),
-
             const SizedBox(height: 24),
-            const Text('Antwortverlauf',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const Text('Antwortverlauf', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
 
-            // Liste unter dem Diagramm:
-            ...points.reversed.map((p) {   // geht Diagrammpunkte so herum durch dass der neueste Eintrag in der Liste oben steht
+            ...points.reversed.map((p) {
               final d = p.datetime;
-              final dateText =
-                  '${d.day.toString().padLeft(2, '0')}.'
-                  '${d.month.toString().padLeft(2, '0')}.'
-                  '${d.year}';
-
+              final dateText = '${d.day.toString().padLeft(2, '0')}.${d.month.toString().padLeft(2, '0')}.${d.year}';
               return ListTile(
                 leading: const Icon(Icons.event_note),
                 title: Text(dateText),
@@ -419,5 +320,28 @@ class EvaluationTab extends StatelessWidget {
       },
     );
   }
+}
 
+// =====================================================================
+// WIDGET PREVIEW WRAPPER
+// =====================================================================
+// WICHTIG: Klicke für deine Vorschau ab sofort HIER auf diesen
+// Wrapper und NICHT mehr oben auf den "AuswertungFragebogenScreen".
+
+class AuswertungPreviewWrapper extends StatelessWidget {
+  @Preview(
+      name: "Auswertung Screen",
+      textScaleFactor: 1.0,
+      brightness: Brightness.light)
+  const AuswertungPreviewWrapper({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const ProviderScope(
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: AuswertungFragebogenScreen(),
+      ),
+    );
+  }
 }

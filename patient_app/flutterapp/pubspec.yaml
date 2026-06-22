@@ -31,6 +31,7 @@ dependencies:
   flutter:
     sdk: flutter
 
+  flutter_riverpod: ^3.3.2
   
   flutter_localizations:
     sdk: flutter
