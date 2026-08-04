@@ -1,8 +1,8 @@
 /// Repräsentiert einen einzelnen Datenpunkt für die Visualisierung in Diagrammen.
 ///
-/// Ein [DiagrammPunkt] verknüpft einen Zeitpunkt mit einem numerischen Score
+/// Ein [DataPoint] verknüpft einen Zeitpunkt mit einem numerischen Score
 /// und bietet Kontext für die Anzeige in Listen oder Graphen.
-class DiagrammPunkt {
+class DataPoint {
   /// Der Zeitpunkt, zu dem die Antwort gegeben wurde.
   final DateTime datetime;
 
@@ -16,7 +16,7 @@ class DiagrammPunkt {
   /// Wichtig für die Skalierung der Diagrammachsen.
   final double maxScore;
 
-  DiagrammPunkt({
+  DataPoint({
     required this.datetime,
     required this.score,
     required this.interpretation,
@@ -26,8 +26,8 @@ class DiagrammPunkt {
   /// Erzeugt eine Instanz aus einem JSON-Map vom Backend.
   ///
   /// Erwartet die Schlüssel 'date', 'score', 'maxscore' und optional 'interpretation'.
-  factory DiagrammPunkt.fromJson(Map<String, dynamic> json) {
-    return DiagrammPunkt(
+  factory DataPoint.fromJson(Map<String, dynamic> json) {
+    return DataPoint(
       datetime: DateTime.parse(json['date'] as String),
       score: double.parse(json['score'].toString()),
       interpretation: (json['interpretation'] ?? '').toString(),
@@ -40,7 +40,7 @@ class DiagrammPunkt {
 ///
 /// Geht davon aus, dass die Liste bereits sortiert ist oder der erste Eintrag
 /// den neuesten Stand repräsentiert. Gibt 0 zurück, falls die Liste leer ist.
-double newestScore(List<DiagrammPunkt> points) {
+double newestScore(List<DataPoint> points) {
   if (points.isEmpty) return 0;
   return points.first.score;
 }
@@ -51,8 +51,8 @@ double newestScore(List<DiagrammPunkt> points) {
 /// und berechnet für jeden Tag den Mittelwert der Scores.
 ///
 /// Das Ergebnis ist chronologisch aufsteigend sortiert.
-List<DiagrammPunkt> aggrDailyAverage(List<DiagrammPunkt> points) {
-  final Map<DateTime, List<DiagrammPunkt>> grouped = {};
+List<DataPoint> aggrDailyAverage(List<DataPoint> points) {
+  final Map<DateTime, List<DataPoint>> grouped = {};
 
   // Einträge nach Kalendertag gruppieren
   for (final p in points) {
@@ -68,7 +68,7 @@ List<DiagrammPunkt> aggrDailyAverage(List<DiagrammPunkt> points) {
     final avg =
         list.fold<double>(0, (sum, p) => sum + p.score) / list.length;
 
-    return DiagrammPunkt(
+    return DataPoint(
       datetime: day,
       score: avg,
       interpretation: 'Ø Tageswert (${list.length} Einträge)',

@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutterapp/dio_setup.dart'; // Dein Dio-Setup
+import 'package:flutterapp/dio_setup.dart';
 import '../domain/data_point.dart';
 
 
@@ -19,12 +19,12 @@ class EvaluationRepository {
   ///
   /// Wirft eine [Exception], falls der Server mit einem Fehlercode antwortet
   /// oder ein Netzwerkproblem auftritt.
-  Future<List<DiagrammPunkt>> fetchData(String questionnarieId) async{
+  Future<List<DataPoint>> fetchData(String questionnarieId) async{
     try{
       final response = await dio.get("/rls/diagramm/$questionnarieId");
       if (response.statusCode==200){
         final List data = response.data;
-        return data.map((e) => DiagrammPunkt.fromJson(e as Map<String, dynamic>)).toList();
+        return data.map((e) => DataPoint.fromJson(e as Map<String, dynamic>)).toList();
       }else{
         throw Exception('Serverfehler: ${response.statusCode}');
       }
@@ -61,7 +61,7 @@ class EvaluationRepository {
     };
   }
 
-  double avgLast7Days(List<DiagrammPunkt> points) {
+  double avgLast7Days(List<DataPoint> points) {
     if (points.isEmpty) return 0;
 
     final now = DateTime.now();

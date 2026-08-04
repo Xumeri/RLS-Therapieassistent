@@ -180,14 +180,14 @@ class EvaluationTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // Hier greifen wir auf die gecachten Daten zu!
-    final diagrammAsyncValue = ref.watch(diagrammDatenProvider(fragebogenId));
+    final diagrammAsyncValue = ref.watch(dataPointProvider(fragebogenId));
 
     return diagrammAsyncValue.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (err, stack) => Center(child: Text('Fehler: $err')),
       data: (pointsList) {
         // Da die Liste "final" übergeben wird, machen wir eine Kopie zum Sortieren
-        final points = List<DiagrammPunkt>.from(pointsList);
+        final points = List<DataPoint>.from(pointsList);
 
         if (points.isEmpty) {
           return const Center(child: Text('Keine Daten vorhanden.'));

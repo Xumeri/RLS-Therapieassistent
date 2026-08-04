@@ -3,8 +3,8 @@ import 'package:flutterapp/dio_setup.dart';
 
 
 class TagebuchAuswahlScreen extends StatefulWidget {   //Stellt auf einer Seite mit gegebenem Titel "title" den Fragebogen mit der gegebenen ID "id" dar
-  final dynamic title;
-  final dynamic id;
+  final String title;
+  final String id;
   const TagebuchAuswahlScreen({super.key, required this.title, required this.id});
 
   @override
@@ -12,8 +12,8 @@ class TagebuchAuswahlScreen extends StatefulWidget {   //Stellt auf einer Seite 
 }
 
 class _TagebuchAuswahlScreenState extends State<TagebuchAuswahlScreen> {
-  get id => widget.id;   //holt Titel und ID des Widgets
-  get title => widget.title;
+  late var id = widget.id;   //holt Titel und ID des Widgets
+  late var title = widget.title;
   Map<String, dynamic>? questionnaire; // Speichert Antworten pro Frage
   final Map<String, String> answers = {};  //leere Map in der später Fragebogen-Antworten gespeichert werden
   bool loading = true; //True solange Daten geladen werden

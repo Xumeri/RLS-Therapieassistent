@@ -180,7 +180,7 @@ class EvaluationTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final repo = ref.read(evaluationRepositoryProvider);
-    return FutureBuilder<List<DiagrammPunkt>>(
+    return FutureBuilder<List<DataPoint>>(
       future: repo.fetchData(fragebogenId),
       builder: (context, snapshot) {
         // Laden

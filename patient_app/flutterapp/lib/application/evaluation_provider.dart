@@ -7,7 +7,7 @@ import '../domain/data_point.dart';
 /// Nutzt das [evaluationRepositoryProvider], um die Daten asynchron zu laden.
 /// Da es sich um einen [FutureProvider.family] handelt, wird für jede ID (z.B. 'f1', 'f2')
 /// eine eigene Instanz und ein eigener Cache verwaltet.
-final diagrammDatenProvider = FutureProvider.family<List<DiagrammPunkt>, String>((ref, id) async{
+final dataPointProvider = FutureProvider.family<List<DataPoint>, String>((ref, id) async{
   final respository = ref.watch(evaluationRepositoryProvider);
   return respository.fetchData(id);
 });
@@ -17,9 +17,9 @@ final diagrammDatenProvider = FutureProvider.family<List<DiagrammPunkt>, String>
 /// Dieser Provider kombiniert die Ergebnisse von 'f1' (IRLS) und 'f2' (RLSQoL),
 /// um eine Map bereitzustellen, die für die globale Score-Anzeige (KPI-Cards)
 /// im Kopfbereich des Auswertung-Screens genutzt wird.
-final kpiDataProvider = FutureProvider<Map<String, List<DiagrammPunkt>>>((ref) async{
-  final irlsDaten = await ref.watch(diagrammDatenProvider('f1').future);
-  final rlsqolDaten = await ref.watch(diagrammDatenProvider('f2').future);
+final kpiDataProvider = FutureProvider<Map<String, List<DataPoint>>>((ref) async{
+  final irlsDaten = await ref.watch(dataPointProvider('f1').future);
+  final rlsqolDaten = await ref.watch(dataPointProvider('f2').future);
 
   return {
     'f1': irlsDaten,
