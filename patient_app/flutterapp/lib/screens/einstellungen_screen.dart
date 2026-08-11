@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutterapp/screens/login_screen.dart';
 import 'package:flutterapp/services/jwt_service.dart';
 
-import '../application/profile_provider.dart';
+import '../application/patient_provider.dart';
 
 /// Screen für die App-Einstellungen.
 ///
@@ -24,57 +24,44 @@ class EinstellungenScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // build-Methode baut die Benutzeroberfläche
-    // ...
-
-    final profileAsyncValue = ref.watch(profileProvider);
+    final profileAsyncValue = ref.watch(patientProvider);
     return profileAsyncValue.when(
-      loading: () =>
-      const SizedBox(
+      loading: () => const SizedBox(
         height: 120,
         child: Center(child: CircularProgressIndicator()),
       ),
-      error: (err, stack) =>
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Text('Fehler: $err'),
-          ),
-      data: (profile) {
+      error: (err, stack) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Text('Fehler: $err'),
+      ),
+      data: (patientProfile) {
         return Scaffold(
           appBar: AppBar(
-            backgroundColor: Theme
-                .of(
-              context,
-            )
-                .colorScheme
-                .inversePrimary, // die vorgegebene Farbe wird benutzt
+            /// Verwendet die im Theme definierte Farbe für die AppBar.
+            backgroundColor: Theme.of(context).colorScheme.inversePrimary,
             title: Text(title),
           ),
           body: ListView(
-            // Liste für alle Einstellungen
             padding: const EdgeInsets.all(16),
             children: [
-
-              /// ------------------ Profil ----------------------
+              /// Sektion: Profil-Informationen des Patienten.
               Card(
                 child: ListTile(
-                  // Profil-Icon
                   leading: const CircleAvatar(child: Icon(Icons.person)),
                   title: const Text(
                     'Profil',
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  // zeigt die vom Backend erhaltenen Patienteninformationen an:
+                  /// Zeigt Vorname, Nachname und Geburtsdatum vom Backend an.
                   subtitle: Text(
-                    "Vorname: ${profile.name}\nNachname: ${profile
-                        .surname}\nGeburtsdatum: ${profile.birthdate}",
+                    "Vorname: ${patientProfile.name}\nNachname: ${patientProfile.surname}\nGeburtsdatum: ${patientProfile.birthdate}",
                   ),
                 ),
               ),
 
               const SizedBox(height: 20),
 
-              /// ---------------- Konto & Sicherheit ----------------
+              /// Sektion: Konto & Sicherheit.
               const Text(
                 'Konto & Sicherheit',
                 style: TextStyle(fontWeight: FontWeight.bold),
@@ -82,7 +69,7 @@ class EinstellungenScreen extends ConsumerWidget {
               const SizedBox(height: 8),
 
               Card(
-                // Eintrag zum Passwortänderung
+                /// Eintrag zum Ändern des Passworts.
                 child: ListTile(
                   leading: const Icon(Icons.lock_outline),
                   title: const Text('Passwort ändern'),
@@ -92,7 +79,7 @@ class EinstellungenScreen extends ConsumerWidget {
 
               const SizedBox(height: 20),
 
-              /// ---------------- Rechtliches ----------------
+              /// Sektion: Rechtliche Hinweise.
               const Text(
                 'Rechtliches',
                 style: TextStyle(fontWeight: FontWeight.bold),
@@ -125,17 +112,13 @@ class EinstellungenScreen extends ConsumerWidget {
 
               const SizedBox(height: 30),
 
-              /// ---------------- Abmelden ----------------
+              /// Button zur Abmeldung vom System.
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme
-                      .of(context)
-                      .colorScheme
-                      .primary,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
                   foregroundColor: Colors.white,
                 ),
-                onPressed: () =>_logout(context),
-                // Beim Klick wird die Logout-Funktion aufgerufen
+                onPressed: () => _logout(context),
                 icon: const Icon(Icons.logout),
                 label: const Text('Abmelden'),
               ),
@@ -148,43 +131,41 @@ class EinstellungenScreen extends ConsumerWidget {
 
   /// Meldet den Benutzer ab.
   ///
-  /// Zeigt einen Bestätigungsdialog an, löscht das JWT-Token und navigiert
-  /// zum Login-Screen.
+  /// Zeigt einen Bestätigungsdialog an, löscht das JWT-Token über den [jwtService]
+  /// und navigiert zurück zum Login-Screen.
   Future<void> _logout(BuildContext context) async {
     final confirm = await showDialog<bool>(
-      // Dialog zur Bestätigung
       context: context,
-      builder: (context) =>
-          AlertDialog(
-            title: const Text('Abmelden'),
-            content: const Text('Möchten Sie sich wirklich abmelden?'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('Abbrechen'),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text('Abmelden'),
-              ),
-            ],
+      builder: (context) => AlertDialog(
+        title: const Text('Abmelden'),
+        content: const Text('Möchten Sie sich wirklich abmelden?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Abbrechen'),
           ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Abmelden'),
+          ),
+        ],
+      ),
     );
 
     if (confirm != true) return;
 
-    await jwtService.logout(); //Meldet den User ab indem AcessToken aus dem Speicher gelöscht wird
+    /// Löscht das AccessToken aus dem sicheren Speicher.
+    await jwtService.logout();
 
     ScaffoldMessenger.of(context).showSnackBar(
-      // Kurze Rückmeldung für den Nutzer
       const SnackBar(content: Text('Sie wurden abgemeldet.')),
     );
 
+    /// Leert den Navigationsstapel und öffnet den Login-Screen.
     Navigator.pushAndRemoveUntil(
-      //  öffnet den Login-Screen
       context,
       MaterialPageRoute(builder: (_) => LoginScreen()),
-          (route) => false,
+      (route) => false,
     );
   }
 

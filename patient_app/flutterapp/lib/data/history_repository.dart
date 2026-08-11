@@ -3,17 +3,14 @@ import 'package:flutterapp/dio_setup.dart';
 import '../domain/data_point.dart';
 
 
-/// Provider für den [EvaluationRepository], ermöglicht den Zugriff auf die Datenquelle.
-final evaluationRepositoryProvider = Provider<EvaluationRepository>((ref){
-  return EvaluationRepository();
+/// Provider für den [HistoryRepository], ermöglicht den Zugriff auf die Datenquelle.
+final historyRepositoryProvider = Provider<HistoryRepository>((ref){
+  return HistoryRepository();
 });
 
-/// Repository für den Abruf von Auswertungsdaten der RLS-Fragebögen.
-///
-/// Diese Klasse kapselt die Netzwerkzugriffe, um Diagrammdaten für spezifische
-/// Fragebogen-IDs vom Backend zu laden.
-class EvaluationRepository {
-  /// Lädt eine Liste von [DiagrammPunkt]-Objekten für eine bestimmte Fragebogen-ID.
+/// Repository für den Abruf von historischen Auswertungsdaten (Diagramme, KPIs).
+class HistoryRepository {
+  /// Lädt eine Liste von [DataPoint]-Objekten für eine bestimmte Fragebogen-ID.
   ///
   /// [questionnarieId]: Die ID des Fragebogens (z. B. 'f1' für IRLS).
   ///
@@ -35,7 +32,7 @@ class EvaluationRepository {
 
   /// Lädt die Daten und berechnet KPI-Strings
   Future<Map<String, String>> loadKpis() async {
-    // Daten aus Backend holen (über lade_diagrammdaten)
+    // Daten aus Backend holen (über fetchData)
     final sleep = await fetchData('tschlaf');
     final nutrition = await fetchData('ternaehrung');
     final wellbeing = await fetchData('twohlbefinden');

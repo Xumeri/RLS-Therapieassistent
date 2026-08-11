@@ -1,5 +1,5 @@
 /// Repräsentiert das Profil eines Patienten.
-class Profile {
+class PatientProfile {
   /// Der Vorname des Patienten.
   final String name;
 
@@ -9,15 +9,15 @@ class Profile {
   /// Das Geburtsdatum des Patienten.
   final String birthdate;
 
-  Profile({
+  PatientProfile({
     required this.name,
     required this.surname,
     required this.birthdate,
   });
 
-  /// Erstellt eine [Profile]-Instanz aus einem JSON-Map.
-  factory Profile.fromJson(Map<String, dynamic> json) {
-    return Profile(
+  /// Erstellt eine [PatientProfile]-Instanz aus einem JSON-Map.
+  factory PatientProfile.fromJson(Map<String, dynamic> json) {
+    return PatientProfile(
         name: (json['vorname'] ?? '').toString(),
         surname: (json['nachname'] ?? '').toString(),
         birthdate: (json['geburtsdatum'] ?? '').toString());

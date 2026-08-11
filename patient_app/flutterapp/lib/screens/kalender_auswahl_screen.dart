@@ -25,26 +25,26 @@ class _KalenderAuswahlScreenState extends State<KalenderAuswahlScreen> {
   @override
   void initState() {
     super.initState();
-    get_responses();
+    getResponses();
   }
 
 
   // ----------------- holt Fragebogen und Tagebuch Antworten vom Backend ----------------------------------------------------------
-  get_responses() async {
-    final fresponse = await dio.get("/rls/getresponse/${widget.date.substring(0,10)}");
-    if (fresponse.statusCode == 200) {
+  getResponses() async {
+    final fResponse = await dio.get("/rls/getresponse/${widget.date.substring(0,10)}");
+    if (fResponse.statusCode == 200) {
       setState(() {
-        fragebogen_items = fresponse.data;
+        fragebogen_items = fResponse.data;
         fragebogenGeladen = true;
       });
     } else {
       print('Fehler beim Laden der Fragebogen Responses');
     }
 
-    final tresponse = await dio.get("/rls/gettagebuchresponse/${widget.date.substring(0,10)}");
-    if (tresponse.statusCode == 200) {
+    final tResponse = await dio.get("/rls/gettagebuchresponse/${widget.date.substring(0,10)}");
+    if (tResponse.statusCode == 200) {
       setState(() {
-        tagebuch_items = tresponse.data;
+        tagebuch_items = tResponse.data;
         tagebuchGeladen = true;
       });
     } else {

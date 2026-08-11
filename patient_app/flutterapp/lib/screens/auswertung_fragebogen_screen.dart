@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
-import '../application/evaluation_provider.dart';
+import '../application/history_provider.dart';
 import '../domain/data_point.dart';
 
 import 'package:flutter/widget_previews.dart';
