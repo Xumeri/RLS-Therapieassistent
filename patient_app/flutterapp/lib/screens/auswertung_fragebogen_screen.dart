@@ -4,7 +4,6 @@ import 'package:fl_chart/fl_chart.dart';
 import '../application/history_provider.dart';
 import '../domain/data_point.dart';
 
-import 'package:flutter/widget_previews.dart';
 
 /// Screen zur Anzeige der Auswertungsergebnisse der RLS-Fragebögen.
 ///
