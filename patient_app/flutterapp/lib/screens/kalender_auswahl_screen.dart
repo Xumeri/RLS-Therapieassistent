@@ -94,8 +94,8 @@ class _KalenderAuswahlScreenState extends State<KalenderAuswahlScreen> {
 
 
 // ------------------------ baut eine Liste aller Fragebogen-Antworten ---------------------------------------------------------
-Widget buildfresponselist(List fragebogen_items){ 
-  if (fragebogen_items.isEmpty) { 
+Widget buildfresponselist(List fragebogenItems){
+  if (fragebogenItems.isEmpty) {
     return Column(
       children: [
         SizedBox(height: 10,),
@@ -106,18 +106,18 @@ Widget buildfresponselist(List fragebogen_items){
   else { 
     return ListView.builder( 
       shrinkWrap: true, // stellt sicher dass ListView nur den Platz einnimmt den sie braucht -> macht es möglich Listview zusammen mit anderen Widgets in eine Column zu tun
-      itemCount: fragebogen_items.length, 
+      itemCount: fragebogenItems.length,
       itemBuilder: (context, index) { 
         return GestureDetector( onTap: () { 
           Navigator.push(context, MaterialPageRoute(builder: (context) { //Weiterleiten auf KalenderfResponseScreen, mit Zurückknopf 
-          return KalenderfResponseScreen(responsejson: fragebogen_items[index],
+          return KalenderfResponseScreen(responsejson: fragebogenItems[index],
           ); 
         })); 
       }, 
       child: Card( 
         child: ListTile( 
-          title: Text(fragebogen_items[index]["questionnairetitle"]), 
-          subtitle: Text("Score: ${fragebogen_items[index]["score"]} / ${fragebogen_items[index]["maxscore"]}"), 
+          title: Text(fragebogenItems[index]["questionnairetitle"]),
+          subtitle: Text("Score: ${fragebogenItems[index]["score"]} / ${fragebogenItems[index]["maxscore"]}"),
         ), 
       ), 
       ); 
@@ -128,69 +128,67 @@ Widget buildfresponselist(List fragebogen_items){
 
 
   // ------------------ baut eine Liste aller Tagebuch-Antworten --------------------------------------------------------------------
-  Widget buildtresponselist(List tagebuch_items){ 
-  if (tagebuch_items.isEmpty) { 
-    return Column(
-      children: [
-        SizedBox(height: 10,),
-        Center(child: Text("An diesem Tag haben Sie keine Tagebucheinträge gemacht", style: TextStyle(fontSize: 20),)),  // Wird angezeigt wenn keine Fragebogen Antworten vorliegen
-      ],
-    ); 
-  } 
-  else { 
-    return ListView.builder( 
-      shrinkWrap: true, // stellt sicher dass ListView nur den Platz einnimmt den sie braucht -> macht es möglich Listview zusammen mit anderen Widgets in eine Column zu tun
-      itemCount: tagebuch_items.length, 
-      itemBuilder: (context, index) { 
-        return GestureDetector( onTap: () { 
-          Navigator.push(context, MaterialPageRoute(builder: (context) { //Weiterleiten auf KalendertresponseScreen, mit Zurückknopf 
-          return KalendertResponseScreen(responsejson: tagebuch_items[index],); 
-        })); 
-      }, 
-      child: Card(    // auf jeder Tagebuch-Antwort Karte wird die Kategorie als farbiger CircleAvatar mit Icon angzeigt
-        child: ListTile( 
-          leading: getCircleAvatar(tagebuch_items[index]["questionnaireid"]),
-          title: Text(tagebuch_items[index]["questionnairetitle"]), 
-          subtitle: Text("Score: ${tagebuch_items[index]["score"]} / ${tagebuch_items[index]["maxscore"]}"), 
-        ), 
-      ), 
-      ); 
-      }, 
-      ); 
-    }
+Widget buildtresponselist(List tagebuchItems){
+if (tagebuchItems.isEmpty) {
+  return Column(
+    children: [
+      SizedBox(height: 10,),
+      Center(child: Text("An diesem Tag haben Sie keine Tagebucheinträge gemacht", style: TextStyle(fontSize: 20),)),  // Wird angezeigt wenn keine Fragebogen Antworten vorliegen
+    ],
+  );
+}
+else {
+  return ListView.builder(
+    shrinkWrap: true, // stellt sicher dass ListView nur den Platz einnimmt den sie braucht -> macht es möglich Listview zusammen mit anderen Widgets in eine Column zu tun
+    itemCount: tagebuchItems.length,
+    itemBuilder: (context, index) {
+      return GestureDetector( onTap: () {
+        Navigator.push(context, MaterialPageRoute(builder: (context) { //Weiterleiten auf KalendertresponseScreen, mit Zurückknopf
+        return KalendertResponseScreen(responsejson: tagebuchItems[index],);
+      }));
+    },
+    child: Card(    // auf jeder Tagebuch-Antwort Karte wird die Kategorie als farbiger CircleAvatar mit Icon angzeigt
+      child: ListTile(
+        leading: getCircleAvatar(tagebuchItems[index]["questionnaireid"]),
+        title: Text(tagebuchItems[index]["questionnairetitle"]),
+        subtitle: Text("Score: ${tagebuchItems[index]["score"]} / ${tagebuchItems[index]["maxscore"]}"),
+      ),
+    ),
+    );
+    },
+    );
   }
+}
 
-  // ---------------------- erstellt für jede Kategorie den richtigen CircleAvatar -----------------------------------------------------------
-  CircleAvatar getCircleAvatar(id) {
-    if (id == "tschlaf") {
-      return CircleAvatar(
-                          backgroundColor: Colors.blueAccent,
-                          child: Icon(Icons.nights_stay_rounded),
-      );
-    }
-        if (id == "tsport") {
-      return CircleAvatar(
-                          backgroundColor: Colors.orange,
-                          child: Icon(Icons.directions_run),
-      );
-    }
-        if (id == "ternaehrung") {
-      return CircleAvatar(
-                          backgroundColor: Colors.yellow,
-                          child: Icon(Icons.restaurant),
-      );
-    }
-        if (id == "twohlbefinden") {
-      return CircleAvatar(
-                          backgroundColor: Colors.pinkAccent,
-                          child: Icon(Icons.favorite_outline_sharp),
-      );
-    } else {    //avatar der zurückgegeben wird falls die ID zu keinem von den Tagebuchkategorie-Fragebögen passt.
-      return CircleAvatar(
-                          backgroundColor: Colors.black,
-                          child: Icon(Icons.error),
-      );
-    }
-
+// ---------------------- erstellt für jede Kategorie den richtigen CircleAvatar -----------------------------------------------------------
+CircleAvatar getCircleAvatar(id) {
+  if (id == "tschlaf") {
+    return CircleAvatar(
+                        backgroundColor: Colors.blueAccent,
+                        child: Icon(Icons.nights_stay_rounded),
+    );
   }
-
+      if (id == "tsport") {
+    return CircleAvatar(
+                        backgroundColor: Colors.orange,
+                        child: Icon(Icons.directions_run),
+    );
+  }
+      if (id == "ternaehrung") {
+    return CircleAvatar(
+                        backgroundColor: Colors.yellow,
+                        child: Icon(Icons.restaurant),
+    );
+  }
+      if (id == "twohlbefinden") {
+    return CircleAvatar(
+                        backgroundColor: Colors.pinkAccent,
+                        child: Icon(Icons.favorite_outline_sharp),
+    );
+  } else {    //avatar der zurückgegeben wird falls die ID zu keinem von den Tagebuchkategorie-Fragebögen passt.
+    return CircleAvatar(
+                        backgroundColor: Colors.black,
+                        child: Icon(Icons.error),
+    );
+  }
+}

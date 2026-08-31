@@ -13,6 +13,8 @@ import 'package:flutterapp/screens/faq_screen.dart';
 class HomeScreen extends StatelessWidget {
   final String title = "Home Screen";
 
+  const HomeScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class InfosScreen extends StatelessWidget {
-  static final Uri rlsUrl = Uri.parse('https://www.restless-legs.org'); /// URL der RLS-Website als Uri
+  static final Uri rlsUrl = Uri.parse('https://www.restless-legs.org');
+
+  const InfosScreen({super.key}); /// URL der RLS-Website als Uri
 
   Future<void> openRlsWebsite() async {       // Öffnet die RLS-Webseite im externen Browser 
     if (!await launchUrl(rlsUrl, mode: LaunchMode.externalApplication)) {

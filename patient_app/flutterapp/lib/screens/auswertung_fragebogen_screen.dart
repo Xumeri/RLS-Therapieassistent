@@ -322,17 +322,9 @@ class EvaluationTab extends ConsumerWidget {
   }
 }
 
-// =====================================================================
-// WIDGET PREVIEW WRAPPER
-// =====================================================================
-// WICHTIG: Klicke für deine Vorschau ab sofort HIER auf diesen
-// Wrapper und NICHT mehr oben auf den "AuswertungFragebogenScreen".
 
 class AuswertungPreviewWrapper extends StatelessWidget {
-  @Preview(
-      name: "Auswertung Screen",
-      textScaleFactor: 1.0,
-      brightness: Brightness.light)
+
   const AuswertungPreviewWrapper({super.key});
 
   @override

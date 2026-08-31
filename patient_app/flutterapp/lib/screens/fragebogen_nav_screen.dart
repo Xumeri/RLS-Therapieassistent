@@ -7,6 +7,8 @@ import 'package:flutterapp/screens/rlsqol_screen.dart';
 class FragebogenScreen extends StatelessWidget {
   final String title = "Fragebogen auswählen:";
 
+  const FragebogenScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -22,7 +24,7 @@ class FragebogenScreen extends StatelessWidget {
               icon: Icon(Icons.edit_note),
               onPressed: () {
                 Navigator.push(context, MaterialPageRoute(builder: (context) {  //Weiterleiten auf IRLS Screen, mit Zurückknopf
-                  return IRLSScreen(id: '', title: '',);
+                  return IRLSScreen(id: 'f1', title: 'International RLS Scale',);
                 }));
               },
               label: const Text('Fragebogen 1 (IRLS)', style: TextStyle(fontSize: 25),),
