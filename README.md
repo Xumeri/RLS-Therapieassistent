@@ -7,22 +7,24 @@ und Django (Backend), mit FHIR-konformer Datenspeicherung.
 ---
 
 ## Projektstruktur
+
+```
 RLSApp/
-├── patient_app/ # Django Backend
-│ └── api/ # REST API (Views, Models, Serializers)
-├── arzt_app/ # Django Backend (Arzt-Seite, in Entwicklung)
-├── flutterapp/ # Flutter App
-│ └── lib/
-│ ├── application/ # Riverpod Provider
-│ ├── data/ # Repositories (API-Calls)
-│ ├── domain/ # Datenmodelle
-│ ├── screens/ # UI-Screens
-│ ├── services/ # JWT, Notifications
-│ └── dio_setup.dart
-├── mockup_patient/ # UI-Mockup Patienten (TypeScript)
-├── mockup_arzt/ # UI-Mockup Arzt (TypeScript)
+├── patient_app/            # Django Backend
+│   └── api/                # REST API (Views, Models, Serializers)
+├── arzt_app/               # Django Backend (Arzt-Seite, in Entwicklung)
+├── flutterapp/             # Flutter App
+│   └── lib/
+│       ├── application/    # Riverpod Provider
+│       ├── data/           # Repositories (API-Calls)
+│       ├── domain/         # Datenmodelle
+│       ├── screens/        # UI-Screens
+│       ├── services/       # JWT, Notifications
+│       └── dio_setup.dart
+├── mockup_patient/         # UI-Mockup Patienten (TypeScript)
+├── mockup_arzt/            # UI-Mockup Arzt (TypeScript)
 └── FHIR_ressourcen_anlage/ # Skripte zum Einspeichern von FHIR-Ressourcen
----
+```
 
 ## Tech-Stack
 
