@@ -124,9 +124,13 @@ class KpiRow extends ConsumerWidget {
 
 
 /// Kleine Karte für KPI-Anzeige
+/// Widget for displaying a single KPI card.
 class KpiCard extends StatelessWidget {
+  /// The title of the KPI.
   final String title;
+  /// The value to display.
   final String value;
+  /// The icon representing the KPI.
   final IconData icon;
 
   const KpiCard({

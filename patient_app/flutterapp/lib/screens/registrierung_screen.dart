@@ -2,20 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutterapp/screens/login_screen.dart';
 import 'package:flutterapp/services/jwt_service.dart';
 import 'package:flutterapp/data/patient_repository.dart';
-/*
-COMMIT_MESSAGE
-refactor: Registrierung-Screen und Patient-Repository bereinigt
 
-Geänderte Dateien:
-- data/patient_repository.dart: saveFHIRPatient() hinzugefügt –
-  POST /rls/patient/ mit String-Typen, try/catch mit false-Fallback
-- screens/registrierung_screen.dart:
-  saveFhirPatient() aus Screen in PatientRepository ausgelagert,
-  dio_setup.dart Import entfernt,
-  mounted-Checks nach beiden await-Aufrufen ergänzt
- */
 
+/// A screen that allows new users to register an account.
+///
+/// Collects user details like username, password, name, and birthdate.
+/// It performs account creation and saves initial patient profile data.
 class RegistrierungScreen extends StatefulWidget {
+  /// The title of the screen.
   final String title = "Registrierung Screen";
 
   const RegistrierungScreen({super.key});
@@ -25,13 +19,21 @@ class RegistrierungScreen extends StatefulWidget {
 }
 
 class _RegistrierungScreenPageState extends State<RegistrierungScreen> {
-  final usernameController = TextEditingController(); //Erstellt einen Controller um Eingaben im Username Textfeld zu speichern
-  final passwort1Controller = TextEditingController(); //Erstellt einen Controller um Eingaben im Passwort Textfeld zu speichern
-  final passwort2Controller = TextEditingController(); //Erstellt einen Controller um Eingaben im Passwort2 Textfeld zu speichern
-  final vornameController = TextEditingController(); //Erstellt Controller um Eingaben im Vorname Feld zu speichern
-  final nachnameController = TextEditingController(); //Erstellt Controller um Eingaben im Nachname Feld zu speichern
-  final geburtsdatumController = TextEditingController(); //Erstellt Controller um Eingaben im Geburtsdatum Feld zu speichern
-  final jwtService = JwtService(); //erstellt Jwtservice
+  /// Controller for the username input.
+  final usernameController = TextEditingController(); 
+  /// Controller for the primary password input.
+  final passwort1Controller = TextEditingController(); 
+  /// Controller for the password confirmation input.
+  final passwort2Controller = TextEditingController(); 
+  /// Controller for the first name input.
+  final vornameController = TextEditingController(); 
+  /// Controller for the last name input.
+  final nachnameController = TextEditingController(); 
+  /// Controller for the birthdate input.
+  final geburtsdatumController = TextEditingController(); 
+  /// Service for handling JWT operations.
+  final jwtService = JwtService(); 
+  /// Repository for patient data operations.
   final patientRepository = PatientRepository();
 
 

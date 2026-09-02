@@ -58,6 +58,9 @@ class HistoryRepository {
     };
   }
 
+  /// Calculates the average score for the last 7 days from the given list of [points].
+  ///
+  /// Returns 0 if the list is empty or no points are within the last 7 days.
   double avgLast7Days(List<DataPoint> points) {
     if (points.isEmpty) return 0;
 

@@ -4,8 +4,14 @@ import 'package:flutterapp/application/questionnaire_provider.dart';
 import 'package:flutterapp/domain/questionnaire_result.dart';
 
 
-class TagebuchAuswahlScreen extends ConsumerStatefulWidget {   //Stellt auf einer Seite mit gegebenem Titel "title" den Fragebogen mit der gegebenen ID "id" dar
+/// Screen for filling out a specific diary questionnaire.
+///
+/// Includes fields for questionnaire-specific choice questions as well as
+/// public and private diary text entries.
+class TagebuchAuswahlScreen extends ConsumerStatefulWidget {
+  /// The title of the diary category.
   final String title;
+  /// The ID of the questionnaire to load.
   final String id;
 
   const TagebuchAuswahlScreen({

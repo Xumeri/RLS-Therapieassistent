@@ -1,12 +1,12 @@
-/// Repräsentiert das Profil eines Patienten.
+/// Represents the profile of a patient.
 class PatientProfile {
-  /// Der Vorname des Patienten.
+  /// The first name of the patient.
   final String name;
 
-  /// Der Nachname des Patienten.
+  /// The last name of the patient.
   final String surname;
 
-  /// Das Geburtsdatum des Patienten.
+  /// The birthdate of the patient (ISO-8601 string or formatted date).
   final String birthdate;
 
   PatientProfile({

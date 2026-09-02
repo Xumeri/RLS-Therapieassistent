@@ -24,15 +24,19 @@ Geänderte Dateien:
   Tuple wird direkt in data-Zweig aufgelöst
  */
 
-class KalenderAuswahlScreen extends ConsumerWidget {  //wird angezeigt wenn auf dem Kalender ein Tag ausgewählt wird
-
-  final String date;   //erhält dafür das Datum des ausgewählten Tages (als String)
+/// Screen displayed when a specific day is selected from the calendar.
+///
+/// Shows a summary list of all questionnaires and diary entries recorded on that date.
+class KalenderAuswahlScreen extends ConsumerWidget {
+  /// The selected date as an ISO-8601 string.
+  final String date;
 
 const KalenderAuswahlScreen({
     super.key,
     required this.date
 });
 
+  /// Dynamically generated title based on the selected date.
   String get title => "Kalender Tag ${date.substring(0,10)} ausgewählt";
 
   // ------------- Build Methode --------------------------------------------------------------------------------------------

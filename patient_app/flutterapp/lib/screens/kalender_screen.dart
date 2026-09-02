@@ -3,6 +3,9 @@ import 'package:flutterapp/screens/kalender_auswahl_screen.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 
+/// A screen that displays a calendar view to the user.
+///
+/// Users can select a specific date to view related questionnaire results and diary entries.
 class KalenderScreen extends StatefulWidget {
   const KalenderScreen({super.key});
 
@@ -11,9 +14,12 @@ class KalenderScreen extends StatefulWidget {
 }
 
 class _KalenderScreenState extends State<KalenderScreen> {
+  /// The title of the screen.
   final String title = "Kalender";
-  DateTime today = DateTime.now(); //speichert das aktuelle Datum und die aktuelle Uhrzeit
-  DateTime _focusedDay = DateTime.now();  //Variable focusedDay, hat als initialen Wert auch das aktuelle Datum und die aktuelle Uhrzeit
+  /// Today's date and time.
+  DateTime today = DateTime.now();
+  /// The currently focused day in the calendar.
+  DateTime _focusedDay = DateTime.now();
 
   // ------------------------------ Build Methode -------------------------------------------------------------------------------------------
   @override

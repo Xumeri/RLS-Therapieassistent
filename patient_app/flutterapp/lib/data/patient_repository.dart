@@ -27,6 +27,10 @@ class PatientRepository {
       throw Exception('Fehler beim Laden des Profils: $e');
     }
   }
+  /// Saves a FHIR Patient resource to the backend.
+  ///
+  /// Takes [username], [firstname], [surname], and [birthdate] as parameters.
+  /// Returns `true` if the resource was successfully created (HTTP 201).
   Future<bool> saveFhirPatient(String username, String firstname,String surname,String birthdate) async{
     try {
       final response = await dio.post("/rls/patient/",
@@ -44,6 +48,10 @@ class PatientRepository {
     return false;
   }
 
+  /// Changes the patient's password on the server.
+  ///
+  /// Takes the [oldPassword] and the [newPassword].
+  /// Returns `true` if the password was successfully changed.
   Future<bool> changePassword(String oldPassword, String newPassword) async{
     try{
       final response = await dio.post('/rls/change-password/',

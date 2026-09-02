@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 
-class KalendertResponseScreen extends StatefulWidget {  //zeigt eine bestimmte Tagebuch-Antwort an, die bei einem Kalendertag-Screen ausgeählt wurde
-  final Map<String, dynamic>? responsejson;  //erhält dafür eine JSON die alle Daten zu der Tagebuch-Antwort enthält
+/// Screen for displaying detailed answers and text entries of a specific diary response.
+///
+/// This screen is typically reached from the [KalenderAuswahlScreen].
+class KalendertResponseScreen extends StatefulWidget {
+  /// The JSON data representing the diary response.
+  final Map<String, dynamic>? responsejson;
   const KalendertResponseScreen({super.key, required this.responsejson});
 
   @override
@@ -9,6 +13,7 @@ class KalendertResponseScreen extends StatefulWidget {  //zeigt eine bestimmte T
 }
 
 class _KalendertResponseScreenState extends State<KalendertResponseScreen> {
+  /// The title of the screen.
   final String title = "Tagebucheintrag Details";
 
   // -------------------------------- Build Methode ------------------------------------------------------------------------------------------

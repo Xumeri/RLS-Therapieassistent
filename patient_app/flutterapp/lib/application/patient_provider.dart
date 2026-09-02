@@ -10,15 +10,18 @@ final patientProvider = FutureProvider<PatientProfile>((ref) async {
   return repository.fetchProfile();
 });
 
+/// Provider for the [PatientService].
 final patientServiceProvider = Provider<PatientService>((ref){
   final repository = ref.watch(patientRepositoryProvider);
   return PatientService(repository);
 });
 
+/// Service class for patient-related operations.
 class PatientService{
   final PatientRepository repository;
   PatientService(this.repository);
 
+  /// Changes the patient's password.
   Future<bool> changePassword(String oldPassword, String newPassword){
     return repository.changePassword(oldPassword, newPassword);
   }

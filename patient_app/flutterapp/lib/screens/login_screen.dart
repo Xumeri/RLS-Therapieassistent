@@ -7,7 +7,12 @@ import 'package:flutterapp/services/jwt_service.dart';
 // https://medium.com/@rohan.surve5/building-a-simple-login-screen-in-flutter-my-comeback-to-ui-development-60ebf1cd4bdc
 // angepasst und um die login Methode erweitert
 
+/// A screen that allows users to log in to the application.
+///
+/// Provides text fields for the username and password, and buttons for logging in
+/// or navigating to the registration screen.
 class LoginScreen extends StatefulWidget {
+  /// The title of the screen.
   final String title = "Login Screen";
 
   const LoginScreen({super.key});
@@ -17,9 +22,12 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginScreen> {
-  final usernameController = TextEditingController(); //Erstellt einen Controller um Eingaben im Username Textfeld zu speichern
-  final passwordController = TextEditingController(); //Erstellt einen Controller um Eingaben im Passwort Textfeld zu speichern
-  final jwtService = JwtService(); //erstellt Jwtservice
+  /// Controller for the username input field.
+  final usernameController = TextEditingController(); 
+  /// Controller for the password input field.
+  final passwordController = TextEditingController(); 
+  /// Service for handling JWT operations.
+  final jwtService = JwtService(); 
 
   // dispose Methode (wird auf Flutter Webseite empfohlen: https://docs.flutter.dev/cookbook/forms/text-field-changes)
   // entfernt Controller wenn sie nicht mehr gebraucht werden

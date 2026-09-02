@@ -4,7 +4,11 @@ import 'questionnaire_screen.dart';
 
 
 
+/// A navigation screen for selecting a questionnaire to fill out.
+///
+/// Provides access to the IRLS (International RLS Scale) and RLS QoL (RLS Quality of Life) questionnaires.
 class FragebogenScreen extends StatelessWidget {
+  /// The title of the screen.
   final String title = "Fragebogen auswählen:";
 
   const FragebogenScreen({super.key});

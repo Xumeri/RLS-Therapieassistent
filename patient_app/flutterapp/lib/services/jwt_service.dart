@@ -7,15 +7,21 @@ import 'package:flutterapp/dio_setup.dart';
 // https://medium.com/@areesh-ali/building-a-secure-flutter-app-with-jwt-and-apis-e22ade2b2d5f
 // angepasst: auth_service und token_service in einer Klasse JwtService zusammengeführt
 
+/// Service for managing JSON Web Tokens (JWT) and user authentication.
+///
+/// This service handles saving, retrieving, and deleting tokens from secure storage,
+/// as well as performing login, signup, and logout operations.
 class JwtService {
   final FlutterSecureStorage _storage = FlutterSecureStorage();
 
-  //--------- Methode um Token im SecureStorage zu speichern --------------------------------------------
+  /// Saves the [tokenString] to the secure storage.
   Future<void> saveToken(String tokenString) async {
     await _storage.write(key: 'jwt', value: tokenString); //speichert erhaltenes Token als String in securestorage
   }
 
-  //--------- Method um Tokens aus dem SecureStorage zu holen --------------------------------------------
+  /// Retrieves the JWT access token from secure storage.
+  ///
+  /// Returns the access token string if it exists and is valid, otherwise returns `null`.
   Future<String?> getToken() async {
     final tokenString = await _storage.read(key: 'jwt'); //holt Token als String aus securestorage
     if (tokenString != null){
@@ -27,12 +33,14 @@ class JwtService {
     }
   }
 
-  //--------- Methode um Token aus dem SecureStorage zu löschen --------------------------------------------
+  /// Deletes the JWT token from secure storage.
   Future<void> deleteToken() async {
     await _storage.delete(key: 'jwt');
   }
 
-  //--------- Methode für User Login -----------------------------------------------------------------
+  /// Authenticates a user with their [username] and [password].
+  ///
+  /// Returns `true` if authentication is successful and the token is saved.
   Future<bool> login(String username, String password) async {
     try {
       final response = await dio.post("/token/",   //verwendet dio das in dio_setup erstellt wurde
@@ -53,7 +61,9 @@ class JwtService {
     return false;
   }
 
-  //--------- Methode für Registrierung von neuen Benutzern --------------------------------------------
+  /// Registers a new user with the given [username] and [password].
+  ///
+  /// Returns `true` if registration is successful.
   Future<bool> signup(String username, String password) async {
     try {
       final response = await dio.post("/register/",
@@ -81,7 +91,7 @@ class JwtService {
     return false;
   }
 
-  //--------- Methode für User Logout ----------------------------------------------------------------
+  /// Logs the user out by deleting their JWT token.
   Future<void> logout() async {
     await _storage.delete(key: 'jwt');
   }
