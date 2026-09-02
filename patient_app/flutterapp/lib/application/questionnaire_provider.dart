@@ -25,11 +25,15 @@ class QuestionnaireService {
     required String id,
     required Map<String, dynamic> questionnaire,
     required Map<String, String> answers,
+    String? publicEntry,
+    String? privateEntry,
   }) {
     return repository.sendResponse(
       id: id,
       questionnaire: questionnaire,
       answers: answers,
+      publicEntry: publicEntry,
+      privateEntry: privateEntry,
     );
   }
 }

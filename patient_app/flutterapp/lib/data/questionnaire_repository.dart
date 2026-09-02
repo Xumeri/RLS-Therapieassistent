@@ -22,6 +22,8 @@ class QuestionnaireRepository {
     required String id,
     required Map<String, dynamic> questionnaire,
     required Map<String, String> answers,
+    String? publicEntry,
+    String? privateEntry,
   }) async {
 
     final date = DateTime.now();
@@ -60,19 +62,18 @@ class QuestionnaireRepository {
       "status": "completed",
       "authored": formattedAuthored,
       "item": [
-        {
-          "linkId": "0.1",
-          "valueInteger": null
-        },
-        {
-          "linkId": "0.2",
-          "valueString": "null"
-        },
-        {
-          "linkId": "1",
-          "item": items
-        }
-      ]
+        {"linkId": "0.1", "valueInteger": null},
+        {"linkId": "0.2", "valueString": "null"},
+        {"linkId": "1", "item": items},
+        if (publicEntry != null || privateEntry != null)
+          {
+            "linkId": "2",
+            "item": [
+              {"linkId": "2.1", "text": publicEntry ?? "null"},
+              {"linkId": "2.2", "text": privateEntry ?? "null"},
+            ]
+          },
+      ],
     };
 
     try {
