@@ -8,21 +8,21 @@ import '../domain/questionnaire_result.dart';
 ///
 /// Dieser Screen lädt die Fragebogendefinition dynamisch anhand einer ID
 /// und ermöglicht es dem Benutzer, Antworten auszuwählen und abzusenden.
-class IRLSScreen  extends ConsumerStatefulWidget{
+class QuestionnaireScreen extends ConsumerStatefulWidget{
 
   final String id;
   final String title;
 
-  const IRLSScreen({
+  const QuestionnaireScreen({
     super.key,
     required this.id,
     required this.title
 });
   @override
-  ConsumerState<IRLSScreen> createState()  => _IRLSScreenState();
+  ConsumerState<QuestionnaireScreen> createState()  => _IRLSScreenState();
 }
 
-class _IRLSScreenState extends ConsumerState<IRLSScreen>{
+class _IRLSScreenState extends ConsumerState<QuestionnaireScreen>{
   final Map<String, String> _answers = {};
   QuestionnaireResult? _result;
 

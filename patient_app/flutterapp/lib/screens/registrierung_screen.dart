@@ -1,7 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:flutterapp/dio_setup.dart';
 import 'package:flutterapp/screens/login_screen.dart';
 import 'package:flutterapp/services/jwt_service.dart';
+import 'package:flutterapp/data/patient_repository.dart';
+/*
+COMMIT_MESSAGE
+refactor: Registrierung-Screen und Patient-Repository bereinigt
+
+Geänderte Dateien:
+- data/patient_repository.dart: saveFHIRPatient() hinzugefügt –
+  POST /rls/patient/ mit String-Typen, try/catch mit false-Fallback
+- screens/registrierung_screen.dart:
+  saveFhirPatient() aus Screen in PatientRepository ausgelagert,
+  dio_setup.dart Import entfernt,
+  mounted-Checks nach beiden await-Aufrufen ergänzt
+ */
 
 class RegistrierungScreen extends StatefulWidget {
   final String title = "Registrierung Screen";
@@ -18,12 +30,13 @@ class _RegistrierungScreenPageState extends State<RegistrierungScreen> {
   final nachnameController = TextEditingController(); //Erstellt Controller um Eingaben im Nachname Feld zu speichern
   final geburtsdatumController = TextEditingController(); //Erstellt Controller um Eingaben im Geburtsdatum Feld zu speichern
   final jwtService = JwtService(); //erstellt Jwtservice
+  final patientRepository = PatientRepository();
 
 
   // dispose Methode (wird auf Flutter Webseite empfohlen: https://docs.flutter.dev/cookbook/forms/text-field-changes)
   // entfernt Controller wenn sie nicht mehr gebraucht werden
     @override
-  void dispose() {  
+  void dispose() {
     usernameController.dispose();
     passwort1Controller.dispose();
     passwort2Controller.dispose();
@@ -38,7 +51,7 @@ class _RegistrierungScreenPageState extends State<RegistrierungScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,   
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(widget.title),
       ),
       body: Center(
@@ -104,7 +117,7 @@ class _RegistrierungScreenPageState extends State<RegistrierungScreen> {
                             initialDate: today,
                           );
                   if (picked != null) {  // sobals ein Datum ausgewählt wurde, wird es im YYYY-MM-DD Format als Text des Textfelds gespeichert
-                        String date = picked.toIso8601String().substring(0,10);  
+                        String date = picked.toIso8601String().substring(0,10);
                         geburtsdatumController.text = date;
                   }
                 },
@@ -142,11 +155,11 @@ class _RegistrierungScreenPageState extends State<RegistrierungScreen> {
       else {
             final passwort = passwort1;    //Wenn Passwörter übereinetimmen....
             var success = await jwtService.signup(username, passwort);  //Werden Benutzername + Passwort für die Registrierung an das Backend gesendet
-
+          if(!mounted) return;
           if (success) {
               //wenn Login Info erfolgreich gesendet und eine Antwort vom Backend erhalten wurde....
-              await saveFhirPatient(username, vorname, nachname, geburtsdatum); //Daten für FHIR Patient Ressource werden an Backend gesendet
-
+              await patientRepository.saveFhirPatient(username, vorname, nachname, geburtsdatum); //Daten für FHIR Patient Ressource werden an Backend gesendet
+              if(!mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(  //Nachricht
                 SnackBar(content: Text("Registrierung erfolgreich!")),
               );
@@ -160,17 +173,4 @@ class _RegistrierungScreenPageState extends State<RegistrierungScreen> {
           }
       }
   }
-
-  // ----------------------- Methode die FHIR Patientendaten an Backend sendet ----------------------------------------------------
-  Future<void> saveFhirPatient(username,vorname,nachname,geburtsdatum) async {
-    final response = await dio.post("/rls/patient/",   //verwendet dio das in dio_setup erstellt wurde
-        data: {
-          'username' : username,
-          'vorname': vorname, 
-          'nachname': nachname,
-          'geburtsdatum': geburtsdatum
-        },
-      );
-  }
-
 }

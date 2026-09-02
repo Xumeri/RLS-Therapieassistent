@@ -88,7 +88,7 @@ class _LoginPageState extends State<LoginScreen> {
 
       var success = await jwtService.login(username, password); //verwendet JWT Service login Methode um Benutzername und Passwort ans Backend zu senden und Nutzer einzuloggen
 
-
+      if(!mounted) return;
       if (success) {
           //wenn Login Info erfolgreich gesendet und eine Antwort vom Backend erhalten wurde....
 

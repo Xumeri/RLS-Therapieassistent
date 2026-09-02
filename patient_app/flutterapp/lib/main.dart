@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutterapp/screens/login_screen.dart';
 import 'services/notification_service.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -37,7 +38,11 @@ Future<void> main() async {
 
   }
 
-  initializeDateFormatting().then((_) => runApp(MyApp()));  //initializeDateFormatting  wird benötigt um bei table_calendar die Sprache umzustellen
+  initializeDateFormatting().then((_) => runApp(
+    ProviderScope(
+      child: MyApp(),
+    ),
+  ));  //initializeDateFormatting  wird benötigt um bei table_calendar die Sprache umzustellen
 }
 
 class MyApp extends StatelessWidget { //Der Code in MyApp richtet die gesamte App ein

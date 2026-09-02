@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'irls_screen.dart';
-import 'package:flutterapp/screens/rlsqol_screen.dart';
+import 'questionnaire_screen.dart';
+
 
 
 
@@ -24,7 +24,7 @@ class FragebogenScreen extends StatelessWidget {
               icon: Icon(Icons.edit_note),
               onPressed: () {
                 Navigator.push(context, MaterialPageRoute(builder: (context) {  //Weiterleiten auf IRLS Screen, mit Zurückknopf
-                  return IRLSScreen(id: 'f1', title: 'International RLS Scale',);
+                  return QuestionnaireScreen(id: 'f1', title: 'International RLS Scale',);
                 }));
               },
               label: const Text('Fragebogen 1 (IRLS)', style: TextStyle(fontSize: 25),),
@@ -34,7 +34,7 @@ class FragebogenScreen extends StatelessWidget {
               icon: Icon(Icons.edit_note),
               onPressed: () {
                 Navigator.push(context, MaterialPageRoute(builder: (context) {    //Weiterleiten auf RLSQoL Screen, mit Zurückknopf
-                  return RLSQOLScreen();
+                  return QuestionnaireScreen(id: 'f2', title: 'RLS Quality of Life',);
                 }));
               },
               label: const Text('Fragebogen 2 (RLS QoL)', style: TextStyle(fontSize: 25),),

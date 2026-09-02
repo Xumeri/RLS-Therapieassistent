@@ -27,4 +27,20 @@ class PatientRepository {
       throw Exception('Fehler beim Laden des Profils: $e');
     }
   }
+  Future<bool> saveFhirPatient(String username, String firstname,String surname,String birthdate) async{
+    try {
+      final response = await dio.post("/rls/patient/",
+        data: {
+          'username': username,
+          'vorname': firstname,
+          'nachname': surname,
+          'geburtsdatum': birthdate
+        },
+      );
+      if (response.statusCode == 201) return true;
+    }catch(e){
+      return false;
+    }
+    return false;
+  }
 }
