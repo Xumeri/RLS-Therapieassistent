@@ -5,6 +5,8 @@ import 'package:flutterapp/screens/auswertung_tagebuch_screen.dart';
 class AuswertungScreen extends StatelessWidget {
   final String title = "Auswertung auswählen:";
 
+  const AuswertungScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

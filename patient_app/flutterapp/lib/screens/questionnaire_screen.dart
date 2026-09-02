@@ -43,7 +43,7 @@ class _IRLSScreenState extends ConsumerState<QuestionnaireScreen>{
 
   /// Baut den Inhalt des Fragebogens auf, wenn die Daten erfolgreich geladen wurden.
   Widget _buildcontent(Map<String, dynamic> questionnaire){
-
+    debugPrint(questionnaire["item"][0].toString());
     final items = (questionnaire['item'] as List?)?[2]?['item'] as List? ?? [];
     final maxScore = questionnaire["item"][0]["extension"][0]["valueInteger"] as int? ?? 0;
     return Scaffold(

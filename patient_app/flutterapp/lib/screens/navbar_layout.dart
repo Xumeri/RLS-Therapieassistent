@@ -4,6 +4,8 @@ import 'package:flutterapp/screens/home_screen.dart';
 import 'package:flutterapp/screens/kalender_screen.dart';
 
 class NavbarLayout extends StatefulWidget {
+  const NavbarLayout({super.key});
+
   @override
   State<NavbarLayout> createState() => _NavbarLayoutState();
 }

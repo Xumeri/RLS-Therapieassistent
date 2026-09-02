@@ -1,5 +1,6 @@
 import json
 from fhir.resources.questionnaire import Questionnaire
+from config import SERVER_URL
 
 json_obj = {
   "resourceType" : "Questionnaire",
@@ -84,7 +85,7 @@ quest = Questionnaire(**json_obj)   #macht aus json_obj eine Questionnaire Resso
 
 
 import requests
-server_url = "https://i-lv-prj-01.informatik.hs-ulm.de"
+server_url = SERVER_URL
 
 quest_object = quest.model_dump() 
 

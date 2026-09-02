@@ -18,6 +18,8 @@ Geänderte Dateien:
 class RegistrierungScreen extends StatefulWidget {
   final String title = "Registrierung Screen";
 
+  const RegistrierungScreen({super.key});
+
   @override
   State<RegistrierungScreen> createState() => _RegistrierungScreenPageState();
 }

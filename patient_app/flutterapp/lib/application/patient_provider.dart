@@ -9,3 +9,17 @@ final patientProvider = FutureProvider<PatientProfile>((ref) async {
   final repository = ref.watch(patientRepositoryProvider);
   return repository.fetchProfile();
 });
+
+final patientServiceProvider = Provider<PatientService>((ref){
+  final repository = ref.watch(patientRepositoryProvider);
+  return PatientService(repository);
+});
+
+class PatientService{
+  final PatientRepository repository;
+  PatientService(this.repository);
+
+  Future<bool> changePassword(String oldPassword, String newPassword){
+    return repository.changePassword(oldPassword, newPassword);
+  }
+}

@@ -155,7 +155,7 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen>
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       DropdownButtonFormField<ReminderType>(      // Auswahl der Art der Erinnerung
-                        value: selectedType,
+                        initialValue: selectedType,
                         decoration: const InputDecoration(
                           labelText: 'Art der Erinnerung',
                         ),
@@ -237,7 +237,7 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen>
                       const SizedBox(height: 12),
 
                       DropdownButtonFormField<ReminderFrequency>(   // Häufigkeit auswählen (täglich/wöchentlich/...)
-                        value: selectedFrequency,
+                        initialValue: selectedFrequency,
                         decoration: const InputDecoration(labelText: 'Häufigkeit'),
                         items: ReminderFrequency.values.map((freq) {
                           return DropdownMenuItem(
@@ -289,8 +289,8 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen>
 
                     setState(() => _reminders.add(newReminder));      // Reminder zur Liste hinzufügen und direkt speichern 
                     await _saveReminders(); 
-
-                    if (mounted) Navigator.of(context).pop();
+                    if(!context.mounted) return;
+                    Navigator.of(context).pop();
                   },
                 ),
               ],

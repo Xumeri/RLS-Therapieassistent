@@ -6,7 +6,7 @@ import 'package:flutterapp/services/jwt_service.dart';
 final dio = Dio()
       // URL mit 10.0.2.2:8000 für Android Emulator
       // URL mit 127.0.0.1:8000 für Edge und co
-..options.baseUrl = "http://127.0.0.1:8000/api"
+..options.baseUrl = "http://10.0.2.2:8000/api"
 ..interceptors.add(LogInterceptor(requestHeader: true, requestBody: true))
 ..interceptors.add(   //fügt einen Interceptor zu dem dio http client hinzu
                       //das .. ist ein cascade operator (https://medium.com/@rk0936626/all-about-cascade-operator-in-dart-flutter-530b1e788a03)

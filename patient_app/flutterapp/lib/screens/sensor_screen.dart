@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 class SensorScreen extends StatelessWidget {
   final String title = "Sensordaten";
+
+  const SensorScreen({super.key});
   @override
   Widget build(BuildContext context) {
     return Scaffold(

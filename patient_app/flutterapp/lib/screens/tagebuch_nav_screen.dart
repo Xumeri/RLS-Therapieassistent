@@ -4,6 +4,8 @@ import 'package:flutterapp/screens/tagebuch_auswahl_screen.dart';
 class TagebuchScreen extends StatelessWidget {
   final String title = "Tagebuch";
 
+  const TagebuchScreen({super.key});
+
   // ------------------------------ Build Methode (für ListView mit mehreren Cards) ----------------------------------------------------
   @override
   Widget build(BuildContext context) {

@@ -49,7 +49,14 @@ const KalenderAuswahlScreen({
             Scaffold(
               body: Center(child: Text('Fehler: $err')),
             ),
-        data: (tuple) => _buildContent(context,tuple.$1, tuple.$2)
+        data: (tuple) {
+          return RefreshIndicator(
+            onRefresh: () async{
+              ref.invalidate(calendarProvider(currentdate));
+            },
+              child: _buildContent(context,  tuple.$1, tuple.$2),
+          );
+        }
     );
   }
 

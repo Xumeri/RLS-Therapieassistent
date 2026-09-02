@@ -43,4 +43,15 @@ class PatientRepository {
     }
     return false;
   }
+
+  Future<bool> changePassword(String oldPassword, String newPassword) async{
+    try{
+      final response = await dio.post('/rls/change-password/',
+      data:{'old_password': oldPassword,'new_password': newPassword},
+      );
+      return response.statusCode ==200;
+    }catch(e){
+      return false;
+    }
+  }
 }

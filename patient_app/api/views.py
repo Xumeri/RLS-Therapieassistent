@@ -30,11 +30,26 @@ class RegisterView(generics.CreateAPIView):
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
 
+#---------------------Password Änderung------------------------------------------------------------------------
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def change_password(request):
+    user = request.user
+    old_password = request.data.get('old_password')
+    new_password = request.data.get('new_password')
+
+    if not user.check_password(old_password):
+        return JsonResponse({'error': 'Aktuelles Password ist falsch'}, status=400)
+
+    user.set_password(new_password)
+    user.save()
+    return JsonResponse({'message':'Password erfolgreich geändert'}, status=200)
+
 
 
 #----------- Sonstige Views -----------------------------------------------------------------------------------
 
-server_url = "https://i-lv-prj-01.informatik.hs-ulm.de"
+server_url = "http://localhost:8080/fhir"
 
 
 #GET questionnaire

@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import get_questionnaire, get_tagebuch_response, get_patient, post_response, get_questionnaire_response, post_patient, get_diagrammdaten
-from .views import RegisterView, CustomTokenObtainPairView
+from .views import RegisterView, CustomTokenObtainPairView, change_password
 from rest_framework_simplejwt.views import TokenRefreshView
 
 urlpatterns = [
@@ -13,4 +13,5 @@ urlpatterns = [
     path("rls/profil/", get_patient),
     path('register/', RegisterView.as_view(), name='register'),
     path('token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('rls/change-password', change_password)
 ]

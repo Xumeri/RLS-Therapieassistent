@@ -10,6 +10,8 @@ import 'package:flutterapp/services/jwt_service.dart';
 class LoginScreen extends StatefulWidget {
   final String title = "Login Screen";
 
+  const LoginScreen({super.key});
+
   @override
   State<LoginScreen> createState() => _LoginPageState();
 }

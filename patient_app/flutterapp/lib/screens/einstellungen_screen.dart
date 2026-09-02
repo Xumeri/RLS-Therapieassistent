@@ -73,7 +73,7 @@ class EinstellungenScreen extends ConsumerWidget {
                 child: ListTile(
                   leading: const Icon(Icons.lock_outline),
                   title: const Text('Passwort ändern'),
-                  onTap: () => _openChangePasswordDialog(context),
+                  onTap: () => _openChangePasswordDialog(context,ref),
                 ),
               ),
 
@@ -155,8 +155,9 @@ class EinstellungenScreen extends ConsumerWidget {
     if (confirm != true) return;
 
     /// Löscht das AccessToken aus dem sicheren Speicher.
-    await jwtService.logout();
 
+    await jwtService.logout();
+    if(!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Sie wurden abgemeldet.')),
     );
@@ -172,24 +173,33 @@ class EinstellungenScreen extends ConsumerWidget {
 
   /// ---------------- Dialog: Passwort ändern ----------------
   /// Öffnet einen Dialog zum Ändern des Passworts.
-  void _openChangePasswordDialog(BuildContext context) {
+  void _openChangePasswordDialog(BuildContext context, WidgetRef ref) {
+    final oldPasswordController = TextEditingController();
+    final newPasswordController = TextEditingController();
+    final confirmPasswordController = TextEditingController();
+    final service = ref.read(patientServiceProvider);
     showDialog(
       context: context,
-      builder: (context) =>
-          AlertDialog(
+      builder: (context) {
+        return StatefulBuilder(builder: (context, setDialogState){
+
+          return AlertDialog(
             title: const Text('Passwort ändern'),
             content: Column(
               mainAxisSize: MainAxisSize.min,
-              children: const [
+              children: [
                 TextField(
+                  controller: oldPasswordController,
                   obscureText: true,
                   decoration: InputDecoration(labelText: 'Aktuelles Passwort'),
                 ),
                 TextField(
+                  controller: newPasswordController,
                   obscureText: true,
                   decoration: InputDecoration(labelText: 'Neues Passwort'),
                 ),
                 TextField(
+                  controller: confirmPasswordController,
                   obscureText: true,
                   decoration: InputDecoration(labelText: 'Passwort bestätigen'),
                 ),
@@ -201,11 +211,46 @@ class EinstellungenScreen extends ConsumerWidget {
                 child: const Text('Abbrechen'),
               ),
               ElevatedButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () async{
+                  final oldPasswordText = oldPasswordController.text.trim();
+                  final newPasswordText = newPasswordController.text.trim();
+                  final confirmPasswordText = confirmPasswordController.text.trim();
+
+                  if(oldPasswordText.isEmpty || newPasswordText.isEmpty){
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Bitte alle Felder ausfüllen'))
+                    );
+                    return;
+                  }
+                  if(confirmPasswordText != newPasswordText){
+                    ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Passwörter stimmen nicht überein'))
+                    );
+                    return;
+                  }
+                    var success = await service.changePassword(oldPasswordText, newPasswordText);
+                    if(success){
+                      if(!context.mounted) return;
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Passwort wurde erfolgreich geändert')),
+                      );
+                    }else{
+                      if(!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Das Passwort konnte nicht geändert werden. Versuchen Sie es später noch einmal.')),
+                      );
+                    }
+                  },
                 child: const Text('Passwort ändern'),
               ),
             ],
-          ),
-    );
+          );
+        });
+      }).then((_){
+        oldPasswordController.dispose();
+        newPasswordController.dispose();
+        confirmPasswordController.dispose();
+    });
   }
 }

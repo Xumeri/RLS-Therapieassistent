@@ -2,8 +2,9 @@
 
 import requests
 import json
+from config import SERVER_URL
 
-server_url = "https://i-lv-prj-01.informatik.hs-ulm.de"
+server_url = SERVER_URL
 id = "p000000014"
 
 # Ressource vom Server holen
