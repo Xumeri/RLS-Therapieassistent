@@ -47,6 +47,7 @@ dependencies:
   dio: ^5.9.1
   flutter_secure_storage: ^10.0.0
   intl: ^0.20.2
+  flutter_markdown_plus: ^1.0.12
 
 dev_dependencies:
   flutter_test:
@@ -64,6 +65,10 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
+  assets:
+    - assets/legal/de/imprint.md
+    - assets/legal/de/privacy_policy.md
+    - assets/legal/de/terms_of_service.md
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

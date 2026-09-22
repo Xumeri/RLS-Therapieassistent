@@ -25,4 +25,8 @@ class PatientService{
   Future<bool> changePassword(String oldPassword, String newPassword){
     return repository.changePassword(oldPassword, newPassword);
   }
+  Future<bool> deleteAccount(){
+    return repository.deleteAccount();
+  }
+
 }

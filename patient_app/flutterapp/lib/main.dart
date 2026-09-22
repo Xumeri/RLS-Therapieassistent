@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutterapp/screens/login_screen.dart';
+import 'package:flutterapp/screens/on_boarding_flow_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'services/notification_service.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_localizations/flutter_localizations.dart'; 
@@ -22,6 +24,7 @@ void notificationTapBackground(NotificationResponse response) async {
 Future<void> main() async {
   // Notwendig für Plugin-Initialisierung vor runApp()
   WidgetsFlutterBinding.ensureInitialized();
+  Widget startScreen;
 
   // Initialisierung nur für mobile Plattformen
   if (!kIsWeb) {
@@ -38,16 +41,22 @@ Future<void> main() async {
 
   }
 
+  final prefs = await SharedPreferences.getInstance();
+  var  accepted = prefs.getBool('hasAcceptedPolicy');
+  startScreen = accepted ==null ? const OnBoardingFlowScreen() : const LoginScreen();
+
   initializeDateFormatting().then((_) => runApp(
     ProviderScope(
-      child: MyApp(),
+      child: MyApp(startScreen: startScreen,),
     ),
   ));  //initializeDateFormatting  wird benötigt um bei table_calendar die Sprache umzustellen
 }
 
 /// The main application widget that sets up the global theme and routing.
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+    final Widget startScreen;
+
+  const MyApp({super.key, required this.startScreen});
 
   @override
   Widget build(BuildContext context) {
@@ -70,7 +79,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.lightGreen),
         useMaterial3: true,
       ),
-      home: const LoginScreen(),
+      home: startScreen,
     );
   }
 }

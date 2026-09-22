@@ -30,6 +30,7 @@ plugins {
 
     // Kotlin-Version passend zur verwendeten AGP-Version
     id("org.jetbrains.kotlin.android") version "2.4.10" apply false
+    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
 
 // Einbindung des App-Moduls

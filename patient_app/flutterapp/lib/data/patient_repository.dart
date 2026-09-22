@@ -62,4 +62,12 @@ class PatientRepository {
       return false;
     }
   }
+  Future<bool> deleteAccount() async{
+    try{
+      final response = await dio.delete('/rls/delete-account/');
+      return response.statusCode == 200;
+    }catch(e){
+      return false;
+    }
+  }
 }

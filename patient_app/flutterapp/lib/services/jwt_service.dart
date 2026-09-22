@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutterapp/dio_setup.dart';
 
@@ -50,13 +51,14 @@ class JwtService {
       if (response.statusCode == 200) {
         final tokenJson = response.data; //speichert erhaltene Antwort in Variable tokenJson
         if (tokenJson != null) {
+
           String tokenString = jsonEncode(tokenJson); //konvertiert erhaltene JSON in einen String
           await saveToken(tokenString); //sendet String zum Speichern an saveToken Methode
           return true;
         }
       }
     } catch (e) {     // Catch wenn Einloggen schiefgeht
-      print('Login error: $e');
+      debugPrint('Login error: $e');
     }
     return false;
   }
@@ -80,13 +82,13 @@ class JwtService {
     } on DioException catch (e) {   // Catch wenn Registrierung schiefgeht
       if (e.response != null) {
         // Fehlertext vom Backend
-        print('Status: ${e.response!.statusCode}');
-        print('Fehlerdaten: ${e.response!.data}');
+        debugPrint('Status: ${e.response!.statusCode}');
+        debugPrint('Fehlerdaten: ${e.response!.data}');
       } else {
         // Kein Server erreicht
-        print('Request error: ${e.message}');
+        debugPrint('Request error: ${e.message}');
       }
-      print('Signup error: $e');
+      debugPrint('Signup error: $e');
     }
     return false;
   }
