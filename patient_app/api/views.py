@@ -8,12 +8,15 @@ import json
 import requests
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.views import TokenObtainPairView
+
+from portal.fhir_client import _headers
 from .models import CustomPatientUser
 from .serializers import UserRegisterSerializer, CustomTokenObtainPairSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import generics, permissions
 from rest_framework.permissions import IsAuthenticated
+from django.conf import settings
 
 #----------- Klassen für User Authentifizierung --------------------------------------------------------------
 
@@ -39,7 +42,7 @@ server_url = "https://i-lv-prj-01.informatik.hs-ulm.de"
 
 #GET questionnaire
 @api_view(['GET'])  #Decorator. Macht aus Funktion get_questionnaire eine API view, bei der nur GET requests möglich sind
-@permission_classes([IsAuthenticated]) #API kann nur verwendet werden wenn User authentifiziert ist
+@permission_classes([IsAuthenticated]) #API kann nur verwendet werden, wenn User authentifiziert ist
 def get_questionnaire(request, id):
     print(request.user.username)
     print(request.user.patient_id) #gibt username und ID von dem Patienten zurück der die APi verwendet
@@ -200,7 +203,7 @@ def get_questionnaire_response(request, date):  #Funktion alle RLS Questionnaire
     responses = requests.get(
         server_url 
         + "/QuestionnaireResponse/?authored=ge" + start_iso + "&authored=lt" + end_iso
-        + "&source=Patient/" + request.user.patient_id, 
+        + "&source=Patient/" + request.user.patient_id,
         verify=False).json()  #holt alle Questionnaire_Responses vom gesuchten Tag vom gesuchten Patient (dem der die request gemacht hat) im JSON Format vom FHIR Server + macht daraus ein Python Dictionary
 
     if "entry" in responses:
@@ -256,7 +259,7 @@ def get_tagebuch_response(request, date):  #Funktion die alle RLS TagebuchRespon
     responses = requests.get(
         server_url 
         + "/QuestionnaireResponse/?authored=ge" + start_iso + "&authored=lt" + end_iso
-        + "&source=Patient/" + request.user.patient_id, 
+        + "&source=Patient/" + request.user.patient_id,
         verify=False).json()  #holt alle Questionnaire_Responses vom gesuchten Tag vom gesuchten Patient (dem der die request gemacht hat) im JSON Format vom FHIR Server + macht daraus ein Python Dictionary
 
     if "entry" in responses:
@@ -380,4 +383,48 @@ def interpret_score(questionnaire_id, score): #Methode für Interpreatation der 
             return "Ihr Schlaf war durchschnittlich. Mit Routinen lässt er sich verbessern"
         if score > 4:
             return "Ihr Schlaf war heute erholsam. Eine gute Grundlage für ihr Wohlbefinden"
-        
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_account(request):
+
+    r = None
+
+    id = request.user.patient_id
+
+    #Antworten löschen
+    response= requests.delete(server_url+ "/QuestionnaireResponse/"+"?source=Patient/" + id, verify=False)
+
+
+    #Patient löschen, wenn Antworten gelöscht sind
+    if 200 <= response.status_code < 300:
+
+        url = server_url + '/Patient/' + id
+
+        r = requests.delete(url)
+    #Wenn alles erfolgreicht gelöscht
+    if (200 <= response.status_code < 300) and (r is not None and (200<=r.status_code<300)) :
+
+        request.user.delete()
+
+        return JsonResponse({
+            "valid": True,
+            "message": "Account vollständig gelöscht",
+            "data_status": response.status_code,
+            "patient_status": r.status_code,
+
+        })
+    #Wenn Fragebögen nicht gelöscht werden konnten
+    if response.status_code >=300:
+        return JsonResponse({
+            "Object":"Questionnaires",
+            "StatusCode": response.status_code,
+            "message": "Server oder Client Fehler  beim löschen der Antworten",
+        })
+    #Wenn Account nicht gelöscht werden konnte
+    else:
+        return JsonResponse({
+            "Object":"Account",
+            "StatusCode": response.status_code,
+            "message": "Server oder Client Fehler  beim löschen des Accounts",
+        })

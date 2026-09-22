@@ -1,3 +1,4 @@
+from django.http import Http404
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -37,13 +38,13 @@ def home(request):
     def color_irls(v):
         """
         IRLS-Score:
-        0–20  → grün
-        21–30 → orange
-        31–40 → rot
+        0–20    → grün
+        21–30   → orange
+        31–40   → rot
         """
         try:
             v = int(v)
-        except Exception:
+        except ValueError:
             return "#9ca3af"  # grau (kein Wert)
 
         if v >= 31:
@@ -56,7 +57,7 @@ def home(request):
     def color_qol(v):
         try:
             v = int(v)
-        except Exception:
+        except ValueError:
             return "#9ca3af"  # grau
 
         if v <= 33:
@@ -69,12 +70,12 @@ def home(request):
         colors = {c1, c2}
 
         if "#dc2626" in colors:
-            return ("Hohe Priorität", "#dc2626")
+            return "Hohe Priorität", "#dc2626"
         if "#f59e0b" in colors:
-            return ("Mittlere Priorität", "#f59e0b")
+            return "Mittlere Priorität", "#f59e0b"
         if "#16a34a" in colors:
-            return ("Niedrige Priorität", "#16a34a")
-        return ("-", "#9ca3af")
+            return "Niedrige Priorität", "#16a34a"
+        return "-", "#9ca3af"
 
     try:
         # Arzt-ID aus Login 
@@ -126,13 +127,14 @@ def patient_detail(request, patient_id):
     patient = None
 
     try:
+        practitioner_id = request.user.lanr
         # Patientenliste neu laden
-        patients = fetch_patients(count=100)
+        patients = fetch_patients(count=100,practitioner_id=practitioner_id)
 
         # Gesuchten Patienten finden
         patient = next((p for p in patients if p["id"] == patient_id), None)
         if not patient:
-            raise Exception("Patient nicht gefunden")
+            raise Http404("Patient nicht gefunden")
 
         # Fragebögen für den Patienten laden
         qr_link = settings.FHIR_QR_LINK_TEMPLATE.format(id=patient_id)
@@ -148,6 +150,7 @@ def patient_detail(request, patient_id):
 def patient_questionnaire(request, patient_id, questionnaire_id):
     error = None
     summaries = []
+    get_authorized_patient(request, patient_id)
 
     try:
         qr_link = settings.FHIR_QR_LINK_TEMPLATE.format(id=patient_id)
@@ -186,6 +189,11 @@ def patient_questionnaire_response_detail(request, patient_id, questionnaire_id,
     error = None
     answers = []
     authored = ""
+    practitioner_id = request.user.lanr
+    patients = fetch_patients(count=100, practitioner_id = practitioner_id)
+    patient = next((p for p in patients if p["id"]==patient_id),None)
+    if not patient:
+        raise Http404("Patient nicht gefunden")
 
     try:
         qr = fetch_questionnaire_response_by_id(response_id)
@@ -210,3 +218,11 @@ def patient_questionnaire_response_detail(request, patient_id, questionnaire_id,
 @login_required
 def patient_sensors(request, patient_id):
     return render(request, "portal/patient_sensors.html", {"patient_id": patient_id,})
+
+def get_authorized_patient(request, patient_id):
+    practitioner_id = request.user.lanr
+    patients = fetch_patients(count=100, practitioner_id=practitioner_id)
+    patient = next((p for p in patients if p["id"] == patient_id), None)
+    if not patient:
+        raise Http404("Patient nicht gefunden")
+    return patient
