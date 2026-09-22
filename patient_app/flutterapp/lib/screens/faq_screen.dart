@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 
+/// A screen that displays frequently asked questions about RLS and the application.
+///
+/// Uses an [ExpansionTile] to present questions and their respective answers.
 class FAQScreen extends StatelessWidget {
   const FAQScreen({super.key});
 
+  /// A list of FAQ items, where each item is a map with 'question' and 'answer' keys.
   final List<Map<String, String>> faqs = const [
      {
       "question": "Was ist RLS (Restless-Legs-Syndrom)?",

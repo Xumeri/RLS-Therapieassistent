@@ -1,6 +1,6 @@
 plugins {
     id("com.android.application")
-    id("kotlin-android")
+    id("org.jetbrains.kotlin.android")
 
     // Flutter-Gradle-Plugin (erforderlich für Flutter-Android-Projekte)
     id("dev.flutter.flutter-gradle-plugin")
@@ -22,9 +22,15 @@ android {
         // mit Rückwärtskompatibilität (Desugaring)
         isCoreLibraryDesugaringEnabled = true
     }
-
+/*
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_17.toString()
+    }
+    */
+    kotlin {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+        }
     }
 
     defaultConfig {

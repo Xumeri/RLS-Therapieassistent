@@ -26,10 +26,10 @@ plugins {
 
     // Android Gradle Plugin (Version kompatibel mit
     // flutter_local_notifications und Android 15)
-    id("com.android.application") version "8.9.1" apply false
+    id("com.android.application") version "9.4.0" apply false
 
     // Kotlin-Version passend zur verwendeten AGP-Version
-    id("org.jetbrains.kotlin.android") version "2.1.0" apply false
+    id("org.jetbrains.kotlin.android") version "2.4.10" apply false
 }
 
 // Einbindung des App-Moduls

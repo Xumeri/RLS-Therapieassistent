@@ -2,7 +2,8 @@
 
 
 import requests
-server_url = "https://i-lv-prj-01.informatik.hs-ulm.de"
+from config import SERVER_URL
+server_url = SERVER_URL
 
 
 response = requests.delete(

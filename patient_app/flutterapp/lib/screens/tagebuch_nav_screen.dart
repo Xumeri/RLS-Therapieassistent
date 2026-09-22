@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutterapp/screens/tagebuch_auswahl_screen.dart';
 
+/// A navigation screen for selecting different diary categories.
+///
+/// Provides access to sleep, nutrition, activity, and well-being diaries.
 class TagebuchScreen extends StatelessWidget {
+  /// The title of the screen.
   final String title = "Tagebuch";
+
+  const TagebuchScreen({super.key});
 
   // ------------------------------ Build Methode (für ListView mit mehreren Cards) ----------------------------------------------------
   @override

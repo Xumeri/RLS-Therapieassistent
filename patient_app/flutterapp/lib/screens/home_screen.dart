@@ -8,10 +8,15 @@ import 'package:flutterapp/screens/tagebuch_nav_screen.dart';
 import 'package:flutterapp/screens/faq_screen.dart';
 
 
-//--------------------- Homepage --------------------------------------------------
-
+/// The home screen of the application, serving as a navigation hub.
+///
+/// Displays a list of buttons that lead to different sections of the app,
+/// such as questionnaires, the diary, reminders, and evaluation results.
 class HomeScreen extends StatelessWidget {
+  /// The title of the screen displayed in the AppBar.
   final String title = "Home Screen";
+
+  const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

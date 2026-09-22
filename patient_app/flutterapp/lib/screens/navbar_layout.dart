@@ -3,13 +3,19 @@ import 'package:flutterapp/screens/einstellungen_screen.dart';
 import 'package:flutterapp/screens/home_screen.dart';
 import 'package:flutterapp/screens/kalender_screen.dart';
 
+/// A layout widget that provides a bottom navigation bar for the application.
+///
+/// Manages switching between the [HomeScreen], [KalenderScreen], and [EinstellungenScreen].
 class NavbarLayout extends StatefulWidget {
+  const NavbarLayout({super.key});
+
   @override
   State<NavbarLayout> createState() => _NavbarLayoutState();
 }
 
 class _NavbarLayoutState extends State<NavbarLayout> {
-  var selectedIndex = 0;     // Variable für ausgwähltes Ziel, initialisiert mit 0 -> anfangs wird immer Homescreen gezeigt
+  /// The index of the currently selected navigation destination.
+  var selectedIndex = 0;
 
   @override
   Widget build(BuildContext context) {  //page Widget, dem ja nach selectedIndex Wert ein anderer Bildschrim zugewiesen wird

@@ -1,162 +1,154 @@
 import 'package:flutter/material.dart';
-import 'package:flutterapp/dio_setup.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutterapp/application/calendar_provider.dart';
 import 'package:flutterapp/screens/kalender_fresponse_screen.dart';
 import 'package:flutterapp/screens/kalender_tresponse_screen.dart';
 
-class KalenderAuswahlScreen extends StatefulWidget {  //wird angezeigt wenn auf dem Kalender ein Tag ausgewählt wird
-  final String date;   //erhält dafür das Datum des ausgewählten Tages (als String)
-  KalenderAuswahlScreen({super.key, required this.date});
+/*
+COMMIT_MESSAGE:
+  feat: KalenderAuswahlScreen auf Riverpod umgestellt
 
-  @override
-  State<KalenderAuswahlScreen> createState() => _KalenderAuswahlScreenState();
-}
+Neue Dateien:
+- domain/kalender_tag.dart: KalenderTag-Modell
+- data/calendar_repository.dart: fetchData() mit Future.wait –
+  Fragebogen- und Tagebuchdaten werden parallel geladen
+- application/calendar_provider.dart: FutureProvider.family
+  mit Datum (String) als Parameter, Rückgabe als Tuple
 
-class _KalenderAuswahlScreenState extends State<KalenderAuswahlScreen> {
-  String title() => "Kalender Tag ${widget.date.substring(0,10)} ausgewählt";
-  List fragebogen_items = [];  
-  List tagebuch_items = [];  
+Geänderte Dateien:
+- screens/kalender_auswahl_screen.dart:
+  ConsumerStatefulWidget → ConsumerWidget,
+  getResponses() + isLoading-Bug durch .when() ersetzt,
+  buildfresponselist/buildtresponselist/getCircleAvatar
+  in die Klasse verschoben,
+  Tuple wird direkt in data-Zweig aufgelöst
+ */
 
-  String questionnairetitle = "Titel";
-  bool isLoading = true;
-  bool fragebogenGeladen = false;
-  bool tagebuchGeladen = false;
+/// Screen displayed when a specific day is selected from the calendar.
+///
+/// Shows a summary list of all questionnaires and diary entries recorded on that date.
+class KalenderAuswahlScreen extends ConsumerWidget {
+  /// The selected date as an ISO-8601 string.
+  final String date;
 
-  
-  @override
-  void initState() {
-    super.initState();
-    get_responses();
-  }
+const KalenderAuswahlScreen({
+    super.key,
+    required this.date
+});
 
-
-  // ----------------- holt Fragebogen und Tagebuch Antworten vom Backend ----------------------------------------------------------
-  get_responses() async {
-    final fresponse = await dio.get("/rls/getresponse/${widget.date.substring(0,10)}");
-    if (fresponse.statusCode == 200) {
-      setState(() {
-        fragebogen_items = fresponse.data;
-        fragebogenGeladen = true;
-      });
-    } else {
-      print('Fehler beim Laden der Fragebogen Responses');
-    }
-
-    final tresponse = await dio.get("/rls/gettagebuchresponse/${widget.date.substring(0,10)}");
-    if (tresponse.statusCode == 200) {
-      setState(() {
-        tagebuch_items = tresponse.data;
-        tagebuchGeladen = true;
-      });
-    } else {
-      print('Fehler beim Laden der Tagebuch Responses');
-    }
-
-    if (fragebogenGeladen && tagebuchGeladen) {
-      isLoading = false;  // wenn sowohl Fragebogen als auch TagebuchAntworten erfolgreich geladen wurden, wird isLoading auf false gesetzt
-    }
-  }
+  /// Dynamically generated title based on the selected date.
+  String get title => "Kalender Tag ${date.substring(0,10)} ausgewählt";
 
   // ------------- Build Methode --------------------------------------------------------------------------------------------
   @override
-  Widget build(BuildContext context) {
-    if (isLoading) {   // Zeigt Ladebildschirm solange Seite läd
-      return Scaffold(
-        appBar: AppBar(
-          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-          title: Text(title()),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentdate = date.substring(0,10);
+    final calendarAsync = ref.watch(calendarProvider(currentdate));
+    return calendarAsync.when(
+        loading: () =>
+        const Scaffold(
+          body: Center(child: CircularProgressIndicator()),
         ),
-        body: const Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
+        error: (err, stack) =>
+            Scaffold(
+              body: Center(child: Text('Fehler: $err')),
+            ),
+        data: (tuple) {
+          return RefreshIndicator(
+            onRefresh: () async{
+              ref.invalidate(calendarProvider(currentdate));
+            },
+              child: _buildContent(context,  tuple.$1, tuple.$2),
+          );
+        }
+    );
+  }
+
+  Widget _buildContent(BuildContext context, List<dynamic> questionItems, List<dynamic> diaryItems){
 
     return Scaffold(  // Zeigt Liste mit Fragebogen- und Tagebuch-Antworten
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(title()),
+        title: Text(title),
       ),
       body: ListView(
         children: [
             SizedBox(height:10),
             Center(child: Text("Fragebögen:", style: TextStyle(fontSize: 30),)),
-            buildfresponselist(fragebogen_items),
+            buildfresponselist(questionItems),
             SizedBox(height:10),
             Divider(),
             SizedBox(height:10),
             Center(child: Text("Tagebucheinträge:", style: TextStyle(fontSize: 30),)),
-            buildtresponselist(tagebuch_items),
+            buildtresponselist(diaryItems),
           ],
       )
     );
   }
-}
 
-
-// ------------------------ baut eine Liste aller Fragebogen-Antworten ---------------------------------------------------------
-Widget buildfresponselist(List fragebogen_items){ 
-  if (fragebogen_items.isEmpty) { 
-    return Column(
-      children: [
-        SizedBox(height: 10,),
-        Center(child: Text("An diesem Tag haben Sie keine Fragebögen ausgefüllt", style: TextStyle(fontSize: 20),)), // wird angezeigt wenn keine Fragebogen-Antworten vorliegen
-      ],
-    ); 
-  } 
-  else { 
-    return ListView.builder( 
-      shrinkWrap: true, // stellt sicher dass ListView nur den Platz einnimmt den sie braucht -> macht es möglich Listview zusammen mit anderen Widgets in eine Column zu tun
-      itemCount: fragebogen_items.length, 
-      itemBuilder: (context, index) { 
-        return GestureDetector( onTap: () { 
-          Navigator.push(context, MaterialPageRoute(builder: (context) { //Weiterleiten auf KalenderfResponseScreen, mit Zurückknopf 
-          return KalenderfResponseScreen(responsejson: fragebogen_items[index],
-          ); 
-        })); 
-      }, 
-      child: Card( 
-        child: ListTile( 
-          title: Text(fragebogen_items[index]["questionnairetitle"]), 
-          subtitle: Text("Score: ${fragebogen_items[index]["score"]} / ${fragebogen_items[index]["maxscore"]}"), 
-        ), 
-      ), 
-      ); 
-      }, 
-      ); 
+  // ------------------------ baut eine Liste aller Fragebogen-Antworten ---------------------------------------------------------
+  Widget buildfresponselist(List questionItems){
+    if (questionItems.isEmpty) {
+      return Column(
+        children: [
+          SizedBox(height: 10,),
+          Center(child: Text("An diesem Tag haben Sie keine Fragebögen ausgefüllt", style: TextStyle(fontSize: 20),)), // wird angezeigt wenn keine Fragebogen-Antworten vorliegen
+        ],
+      );
     }
-  }
+    else {
+      return ListView.builder(
+        shrinkWrap: true, // stellt sicher dass ListView nur den Platz einnimmt den sie braucht -> macht es möglich Listview zusammen mit anderen Widgets in eine Column zu tun
+        itemCount: questionItems.length,
+        itemBuilder: (context, index) {
+          return GestureDetector( onTap: () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) { //Weiterleiten auf KalenderfResponseScreen, mit Zurückknopf
+            return KalenderfResponseScreen(responsejson: questionItems[index],
+            );
+          }));
+        },
+        child: Card(
+          child: ListTile(
+            title: Text(questionItems[index]["questionnairetitle"]),
+            subtitle: Text("Score: ${questionItems[index]["score"]} / ${questionItems[index]["maxscore"]}"),
+          ),
+        ),
+        );
+        },
+        );
+      }
+    }
 
-
-  // ------------------ baut eine Liste aller Tagebuch-Antworten --------------------------------------------------------------------
-  Widget buildtresponselist(List tagebuch_items){ 
-  if (tagebuch_items.isEmpty) { 
+    // ------------------ baut eine Liste aller Tagebuch-Antworten --------------------------------------------------------------------
+  Widget buildtresponselist(List diaryItems){
+  if (diaryItems.isEmpty) {
     return Column(
       children: [
         SizedBox(height: 10,),
         Center(child: Text("An diesem Tag haben Sie keine Tagebucheinträge gemacht", style: TextStyle(fontSize: 20),)),  // Wird angezeigt wenn keine Fragebogen Antworten vorliegen
       ],
-    ); 
-  } 
-  else { 
-    return ListView.builder( 
+    );
+  }
+  else {
+    return ListView.builder(
       shrinkWrap: true, // stellt sicher dass ListView nur den Platz einnimmt den sie braucht -> macht es möglich Listview zusammen mit anderen Widgets in eine Column zu tun
-      itemCount: tagebuch_items.length, 
-      itemBuilder: (context, index) { 
-        return GestureDetector( onTap: () { 
-          Navigator.push(context, MaterialPageRoute(builder: (context) { //Weiterleiten auf KalendertresponseScreen, mit Zurückknopf 
-          return KalendertResponseScreen(responsejson: tagebuch_items[index],); 
-        })); 
-      }, 
+      itemCount: diaryItems.length,
+      itemBuilder: (context, index) {
+        return GestureDetector( onTap: () {
+          Navigator.push(context, MaterialPageRoute(builder: (context) { //Weiterleiten auf KalendertresponseScreen, mit Zurückknopf
+          return KalendertResponseScreen(responsejson: diaryItems[index],);
+        }));
+      },
       child: Card(    // auf jeder Tagebuch-Antwort Karte wird die Kategorie als farbiger CircleAvatar mit Icon angzeigt
-        child: ListTile( 
-          leading: getCircleAvatar(tagebuch_items[index]["questionnaireid"]),
-          title: Text(tagebuch_items[index]["questionnairetitle"]), 
-          subtitle: Text("Score: ${tagebuch_items[index]["score"]} / ${tagebuch_items[index]["maxscore"]}"), 
-        ), 
-      ), 
-      ); 
-      }, 
-      ); 
+        child: ListTile(
+          leading: getCircleAvatar(diaryItems[index]["questionnaireid"]),
+          title: Text(diaryItems[index]["questionnairetitle"]),
+          subtitle: Text("Score: ${diaryItems[index]["score"]} / ${diaryItems[index]["maxscore"]}"),
+        ),
+      ),
+      );
+      },
+      );
     }
   }
 
@@ -164,33 +156,32 @@ Widget buildfresponselist(List fragebogen_items){
   CircleAvatar getCircleAvatar(id) {
     if (id == "tschlaf") {
       return CircleAvatar(
-                          backgroundColor: Colors.blueAccent,
-                          child: Icon(Icons.nights_stay_rounded),
+        backgroundColor: Colors.blueAccent,
+        child: Icon(Icons.nights_stay_rounded),
       );
     }
-        if (id == "tsport") {
+    if (id == "tsport") {
       return CircleAvatar(
-                          backgroundColor: Colors.orange,
-                          child: Icon(Icons.directions_run),
+        backgroundColor: Colors.orange,
+        child: Icon(Icons.directions_run),
       );
     }
-        if (id == "ternaehrung") {
+    if (id == "ternaehrung") {
       return CircleAvatar(
-                          backgroundColor: Colors.yellow,
-                          child: Icon(Icons.restaurant),
+        backgroundColor: Colors.yellow,
+        child: Icon(Icons.restaurant),
       );
     }
-        if (id == "twohlbefinden") {
+    if (id == "twohlbefinden") {
       return CircleAvatar(
-                          backgroundColor: Colors.pinkAccent,
-                          child: Icon(Icons.favorite_outline_sharp),
+        backgroundColor: Colors.pinkAccent,
+        child: Icon(Icons.favorite_outline_sharp),
       );
-    } else {    //avatar der zurückgegeben wird falls die ID zu keinem von den Tagebuchkategorie-Fragebögen passt.
+    } else { //avatar der zurückgegeben wird falls die ID zu keinem von den Tagebuchkategorie-Fragebögen passt.
       return CircleAvatar(
-                          backgroundColor: Colors.black,
-                          child: Icon(Icons.error),
+        backgroundColor: Colors.black,
+        child: Icon(Icons.error),
       );
     }
-
   }
-
+}

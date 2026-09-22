@@ -2,10 +2,15 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-enum ReminderType { medikament, arzttermin, rezept, fragebogen }            // Typen der Erinnerungen 
-enum ReminderFrequency { taeglich, woechentlich, alle4wochen, einmalig }    // Wie oft die Erinnerung wiederholt werden soll
+/// Types of reminders available in the application.
+enum ReminderType { medikament, arzttermin, rezept, fragebogen }
+/// Frequency options for reminders.
+enum ReminderFrequency { taeglich, woechentlich, alle4wochen, einmalig }
 
-class Reminder {    // Datenmodell für eine Erinnerung
+/// Data model for a reminder.
+///
+/// Stores the type, title, time, date (optional), and frequency of a reminder.
+class Reminder {
   Reminder({
     required this.type,
     required this.title,
@@ -14,14 +19,20 @@ class Reminder {    // Datenmodell für eine Erinnerung
     required this.frequency,
   });
 
-  final ReminderType type;  // Kategorie der Erinnerung (Medikament/Termin/...)
-  final String title; // Titel, der in der Liste angezeigt wird
-  final TimeOfDay time; // Uhrzeit
-  final DateTime? date; // Optionales Datum (z. B. für Arzttermin/Einmalig)
-  final ReminderFrequency frequency; // Wiederholungslogik
+  /// The category of the reminder.
+  final ReminderType type;
+  /// The title displayed in the reminder list.
+  final String title;
+  /// The time of day for the reminder.
+  final TimeOfDay time;
+  /// An optional specific date for the reminder.
+  final DateTime? date;
+  /// How often the reminder should repeat.
+  final ReminderFrequency frequency;
   
 
-  Map<String, dynamic> toJson() => {      // Umwandlung in JSON-Map, damit es als String gespeichert werden kann
+  /// Converts the [Reminder] object to a JSON map for storage.
+  Map<String, dynamic> toJson() => {
         'type': type.index,
         'title': title,
         'timeHour': time.hour,
@@ -30,7 +41,8 @@ class Reminder {    // Datenmodell für eine Erinnerung
         'frequency': frequency.index,
       };
 
-  factory Reminder.fromJson(Map<String, dynamic> json) {    // Baut ein Reminder-Objekt aus einer JSON-Map wieder zusammen (fürs Laden aus dem Speicher)
+  /// Creates a [Reminder] object from a JSON map.
+  factory Reminder.fromJson(Map<String, dynamic> json) {
     return Reminder(
       type: ReminderType.values[json['type'] as int],
       title: json['title'] as String,
@@ -46,6 +58,10 @@ class Reminder {    // Datenmodell für eine Erinnerung
   }
 }
 
+/// Screen for managing medication and appointment reminders.
+///
+/// Allows users to view, add, and delete reminders. Reminders are persisted locally
+/// using [SharedPreferences].
 class ErinnerungenScreen extends StatefulWidget {
   const ErinnerungenScreen({super.key});
 
@@ -155,7 +171,7 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen>
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       DropdownButtonFormField<ReminderType>(      // Auswahl der Art der Erinnerung
-                        value: selectedType,
+                        initialValue: selectedType,
                         decoration: const InputDecoration(
                           labelText: 'Art der Erinnerung',
                         ),
@@ -237,7 +253,7 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen>
                       const SizedBox(height: 12),
 
                       DropdownButtonFormField<ReminderFrequency>(   // Häufigkeit auswählen (täglich/wöchentlich/...)
-                        value: selectedFrequency,
+                        initialValue: selectedFrequency,
                         decoration: const InputDecoration(labelText: 'Häufigkeit'),
                         items: ReminderFrequency.values.map((freq) {
                           return DropdownMenuItem(
@@ -289,8 +305,8 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen>
 
                     setState(() => _reminders.add(newReminder));      // Reminder zur Liste hinzufügen und direkt speichern 
                     await _saveReminders(); 
-
-                    if (mounted) Navigator.of(context).pop();
+                    if(!context.mounted) return;
+                    Navigator.of(context).pop();
                   },
                 ),
               ],

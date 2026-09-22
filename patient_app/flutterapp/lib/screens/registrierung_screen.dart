@@ -1,29 +1,46 @@
 import 'package:flutter/material.dart';
-import 'package:flutterapp/dio_setup.dart';
 import 'package:flutterapp/screens/login_screen.dart';
 import 'package:flutterapp/services/jwt_service.dart';
+import 'package:flutterapp/data/patient_repository.dart';
 
+
+/// A screen that allows new users to register an account.
+///
+/// Collects user details like username, password, name, and birthdate.
+/// It performs account creation and saves initial patient profile data.
 class RegistrierungScreen extends StatefulWidget {
+  /// The title of the screen.
   final String title = "Registrierung Screen";
+
+  const RegistrierungScreen({super.key});
 
   @override
   State<RegistrierungScreen> createState() => _RegistrierungScreenPageState();
 }
 
 class _RegistrierungScreenPageState extends State<RegistrierungScreen> {
-  final usernameController = TextEditingController(); //Erstellt einen Controller um Eingaben im Username Textfeld zu speichern
-  final passwort1Controller = TextEditingController(); //Erstellt einen Controller um Eingaben im Passwort Textfeld zu speichern
-  final passwort2Controller = TextEditingController(); //Erstellt einen Controller um Eingaben im Passwort2 Textfeld zu speichern
-  final vornameController = TextEditingController(); //Erstellt Controller um Eingaben im Vorname Feld zu speichern
-  final nachnameController = TextEditingController(); //Erstellt Controller um Eingaben im Nachname Feld zu speichern
-  final geburtsdatumController = TextEditingController(); //Erstellt Controller um Eingaben im Geburtsdatum Feld zu speichern
-  final jwtService = JwtService(); //erstellt Jwtservice
+  /// Controller for the username input.
+  final usernameController = TextEditingController(); 
+  /// Controller for the primary password input.
+  final passwort1Controller = TextEditingController(); 
+  /// Controller for the password confirmation input.
+  final passwort2Controller = TextEditingController(); 
+  /// Controller for the first name input.
+  final vornameController = TextEditingController(); 
+  /// Controller for the last name input.
+  final nachnameController = TextEditingController(); 
+  /// Controller for the birthdate input.
+  final geburtsdatumController = TextEditingController(); 
+  /// Service for handling JWT operations.
+  final jwtService = JwtService(); 
+  /// Repository for patient data operations.
+  final patientRepository = PatientRepository();
 
 
   // dispose Methode (wird auf Flutter Webseite empfohlen: https://docs.flutter.dev/cookbook/forms/text-field-changes)
   // entfernt Controller wenn sie nicht mehr gebraucht werden
     @override
-  void dispose() {  
+  void dispose() {
     usernameController.dispose();
     passwort1Controller.dispose();
     passwort2Controller.dispose();
@@ -38,7 +55,7 @@ class _RegistrierungScreenPageState extends State<RegistrierungScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,   
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(widget.title),
       ),
       body: Center(
@@ -104,7 +121,7 @@ class _RegistrierungScreenPageState extends State<RegistrierungScreen> {
                             initialDate: today,
                           );
                   if (picked != null) {  // sobals ein Datum ausgewählt wurde, wird es im YYYY-MM-DD Format als Text des Textfelds gespeichert
-                        String date = picked.toIso8601String().substring(0,10);  
+                        String date = picked.toIso8601String().substring(0,10);
                         geburtsdatumController.text = date;
                   }
                 },
@@ -142,11 +159,11 @@ class _RegistrierungScreenPageState extends State<RegistrierungScreen> {
       else {
             final passwort = passwort1;    //Wenn Passwörter übereinetimmen....
             var success = await jwtService.signup(username, passwort);  //Werden Benutzername + Passwort für die Registrierung an das Backend gesendet
-
+          if(!mounted) return;
           if (success) {
               //wenn Login Info erfolgreich gesendet und eine Antwort vom Backend erhalten wurde....
-              await saveFhirPatient(username, vorname, nachname, geburtsdatum); //Daten für FHIR Patient Ressource werden an Backend gesendet
-
+              await patientRepository.saveFhirPatient(username, vorname, nachname, geburtsdatum); //Daten für FHIR Patient Ressource werden an Backend gesendet
+              if(!mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(  //Nachricht
                 SnackBar(content: Text("Registrierung erfolgreich!")),
               );
@@ -160,17 +177,4 @@ class _RegistrierungScreenPageState extends State<RegistrierungScreen> {
           }
       }
   }
-
-  // ----------------------- Methode die FHIR Patientendaten an Backend sendet ----------------------------------------------------
-  Future<void> saveFhirPatient(username,vorname,nachname,geburtsdatum) async {
-    final response = await dio.post("/rls/patient/",   //verwendet dio das in dio_setup erstellt wurde
-        data: {
-          'username' : username,
-          'vorname': vorname, 
-          'nachname': nachname,
-          'geburtsdatum': geburtsdatum
-        },
-      );
-  }
-
 }

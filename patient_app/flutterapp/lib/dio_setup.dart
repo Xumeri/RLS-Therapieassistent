@@ -1,21 +1,22 @@
 import 'package:dio/dio.dart';
 import 'package:flutterapp/services/jwt_service.dart';
 
-//erstellt einen Dio http client mit einer baseUrl, der für die gesamte App verwendet wird
-
+/// Provides a pre-configured [Dio] HTTP client for the entire application.
+///
+/// This client includes a base URL and an interceptor that automatically attaches
+/// a JWT Bearer token to every outgoing request if a token is available.
 final dio = Dio()
-      // URL mit 10.0.2.2:8000 für Android Emulator
-      // URL mit 127.0.0.1:8000 für Edge und co
-..options.baseUrl = "http://127.0.0.1:8000/api"
+      // URL with 10.0.2.2:8000 for Android Emulator
+      // URL with 127.0.0.1:8000 for Edge and others
+..options.baseUrl = "http://10.0.2.2:8000/api"
 ..interceptors.add(LogInterceptor(requestHeader: true, requestBody: true))
-..interceptors.add(   //fügt einen Interceptor zu dem dio http client hinzu
-                      //das .. ist ein cascade operator (https://medium.com/@rk0936626/all-about-cascade-operator-in-dart-flutter-530b1e788a03)
+..interceptors.add(
   QueuedInterceptorsWrapper(
-      onRequest: (requestOptions, handler) async {  //immer wenn eine http request gemacht wird....
-        final token = await JwtService().getToken(); //...ruft dio die methode getToken auf um das acesstoken zu erhalten
-        if (token != null) {   //wenn das token nicht null ist = wenn ein Token vorhanden ist
-          requestOptions.headers['Authorization'] =        //dann wird es bei der request als header mitgeschickt
-              'Bearer $token';
+      /// Intercepts every request to add the Authorization header.
+      onRequest: (requestOptions, handler) async {
+        final token = await JwtService().getToken();
+        if (token != null) {
+          requestOptions.headers['Authorization'] = 'Bearer $token';
         }
         return handler.next(requestOptions);
       },

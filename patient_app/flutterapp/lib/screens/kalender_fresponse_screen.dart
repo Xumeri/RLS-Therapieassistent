@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 
-class KalenderfResponseScreen extends StatefulWidget { //zeigt eine bestimmte Fragebogen-Antwort an, die bei einem Kalendertag-Screen ausgeählt wurde
-  final Map<String, dynamic>? responsejson;  //erhält dafür eine JSON die alle Daten zu der Fragebogen-Antwort enthält
+/// Screen for displaying detailed answers of a specific questionnaire response.
+///
+/// This screen is typically reached from the [KalenderAuswahlScreen].
+class KalenderfResponseScreen extends StatefulWidget {
+  /// The JSON data representing the questionnaire response.
+  final Map<String, dynamic>? responsejson;
   const KalenderfResponseScreen({super.key, required this.responsejson});
 
   @override
@@ -9,6 +13,7 @@ class KalenderfResponseScreen extends StatefulWidget { //zeigt eine bestimmte Fr
 }
 
 class _KalenderfResponseScreenState extends State<KalenderfResponseScreen> {
+  /// The title of the screen.
   final String title = "Fragebogenantwort Details";
 
   // -------------------------------- Build Methode ------------------------------------------------------------------------------------------

@@ -1,156 +1,49 @@
 import 'package:flutter/material.dart';
-import 'package:flutterapp/dio_setup.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutterapp/application/questionnaire_provider.dart';
+import 'package:flutterapp/domain/questionnaire_result.dart';
 
 
-class TagebuchAuswahlScreen extends StatefulWidget {   //Stellt auf einer Seite mit gegebenem Titel "title" den Fragebogen mit der gegebenen ID "id" dar
-  final dynamic title;
-  final dynamic id;
-  const TagebuchAuswahlScreen({super.key, required this.title, required this.id});
+/// Screen for filling out a specific diary questionnaire.
+///
+/// Includes fields for questionnaire-specific choice questions as well as
+/// public and private diary text entries.
+class TagebuchAuswahlScreen extends ConsumerStatefulWidget {
+  /// The title of the diary category.
+  final String title;
+  /// The ID of the questionnaire to load.
+  final String id;
+
+  const TagebuchAuswahlScreen({
+    super.key,
+    required this.title,
+    required this.id
+  });
 
   @override
-  State<TagebuchAuswahlScreen> createState() => _TagebuchAuswahlScreenState();
+  ConsumerState<TagebuchAuswahlScreen> createState() => _TagebuchAuswahlScreenState();
 }
 
-class _TagebuchAuswahlScreenState extends State<TagebuchAuswahlScreen> {
-  get id => widget.id;   //holt Titel und ID des Widgets
-  get title => widget.title;
-  Map<String, dynamic>? questionnaire; // Speichert Antworten pro Frage
-  final Map<String, String> answers = {};  //leere Map in der später Fragebogen-Antworten gespeichert werden
-  bool loading = true; //True solange Daten geladen werden
-  String? error; //Fehlertext, falls etwas schiefgeht
-  Map<String, dynamic>? djangotagebuchresponse; //Speichert die Antwort die vom Backend nach Speichern des Fragebogens zurückkommt
-  int score = 0; //Integer für den Score (wird bei speichern von Questionnairetagebuchresponse von Django übergeben)
-  String interpretation = " "; //String für den Fragebogen Score Interpretation (wird bei speichern von QuestionnaireResponse von Django übergeben)
-  int maxscore = 0; //Integer für dem maximalen Score der erzielt werden kann
+class _TagebuchAuswahlScreenState extends ConsumerState<TagebuchAuswahlScreen> {
+  late var id = widget.id;   //holt Titel und ID des Widgets
+  late var title = widget.title;
+  final Map<String, String> _answers = {};
+  QuestionnaireResult? _result;
+
   final privateController = TextEditingController(); //Erstellt einen Controller um Eingaben im privaten Tagebuchfeld zu speichern
   final publicController = TextEditingController(); //Erstellt einen Controller um Eingaben im öffentlichen (also für den Arzt sichbaren) Textfeld zu speichern
 
 
   @override
-  void initState() {
-    super.initState();
-    loadQuestionnaire();  //Beim Start Fragebogen laden
+  void dispose(){
+    privateController.dispose();
+    publicController.dispose();
+    super.dispose();
   }
-
-  //---------------Fragebogen vom Django Server laden--------------------------------------------------
-  Future<void> loadQuestionnaire() async {
-    try {
-      final resp = await dio.get("/rls/questionnaire/$id");
-
-      if (resp.statusCode == 200) {
-        //JSON erfolgreich erhalten → speichern
-        setState(() {
-          questionnaire = resp.data;
-          loading = false;
-          maxscore = questionnaire?["item"][0]["extension"][0]["valueInteger"]; //Speichet maximal erreichbaren Score in Variable Maxscore
-        });
-      } else {
-        setState(() {
-          error = 'Fehler: ${resp.statusCode}';
-          loading = false;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        error = 'Fehler: $e';
-        loading = false;
-      });
-    }
-  }
-
-  //------------------------------Antworten an Django senden-----------------------------------------------
-  Future<void> sendtagebuchresponse() async {
-    final date = DateTime.now(); //Variable die Zeit speichert zu der der Fragebogen abgesendet wurde
-    if (questionnaire == null) return;
-
-    //Antworten im Backend-kompatiblen Format aufbauen
-    final items = answers.entries.map((entry) {
-      return {
-        "linkId": entry.key, //ID der Frage
-        "answer": [
-          {"valueString": entry.value} //Gewählte Antwort
-        ]
-      };
-    }).toList();
-
-    // sortiert die Antworten Liste nach den LinkIDs (sodass die Antworten trotzdem in der richtigen Reihenfolge gespeichert werden auch wenn die Fragen nicht nach Reihenfolge beantwortet wurden)
-    items.sort((a, b) {
-      final aNum = int.tryParse(a['linkId'].toString().substring(2)) ?? 0; // nimmt die LinkID eines Eintrags ab der 2ten Stelle und konvertiert sie zu einem integer (also von 1.1 wird nur 1 betrachtet, von 1.10 nur 10)
-      final bNum = int.tryParse(b['linkId'].toString().substring(2)) ?? 0; // nimmt die LinkID eines anderen Eintrags und macht daraus auch einen integer
-      return aNum.compareTo(bNum); // sortiert nach diesem Schema die Einträge in der Liste items so, dass die Einträge nach aufsteigender Reihenfolge der LinkIds geordnet sind
-    });
-
-    // Variablen für die öffentlichen / privaten Tagebucheinträge die "null" sind wenn die Tagebuchfelder leer sind (damit FHIR trotzdem einen String bekommt)
-    String publicdiaryentry = "null";
-    String privatediaryentry = "null";
-
-    if (publicController.text.isNotEmpty){
-          publicdiaryentry = publicController.text.trim();
-    }
-
-    if (privateController.text.isNotEmpty){
-          privatediaryentry = privateController.text.trim();
-    }
-
-    //erstellt eine JSON im FHIR Questionnairetagebuchresponse Format, mit den eingegebenen Antworten und Score=null (wir später im Backend berechnet)
-    final body = {
-      "resourceType": "Questionnaireresponse", //FHIR-Format
-      "id" : "r${questionnaire!["id"]}${date.year}${date.month}${date.day}${date.hour}${date.minute}${date.second}",
-      "questionnaire": id, //schickt bei "questionnaire" die ID des Fragebogens (nocht nicht FHIR konform, FHIR möchte hier eine canonical URL, aber wird im Backend dann angepasst)     
-      "status": "completed",
-      "authored" : "${date.toLocal().toIso8601String()}+0${date.timeZoneOffset.toString().substring(0,4)}", //speichert Datum im YYYY-MM-DDThh:mm:ss.sss+zz:zz Format, wie von FHIR vorgegeben
-      "item": [
-        {
-          "linkId": "0.1",       //Platzhalter für Score (wird vom Backend eingefügt)
-          "valueInteger": null
-        },
-                {
-          "linkId": "0.2",       //Platzhalter für Score Interpretation (wird vom Backend eingefügt)
-          "valueString": "null"
-        },
-        {
-          "linkId": "1",   //speichert Liste der Antworten unter linkID 1
-          "item": items
-        },
-        {
-          "linkId": "2",
-          "item" : [{
-            "linkId" : "2.1",       //speichert öffentliche Tagebucheinträge unter linkID 2.1
-            "text" : publicdiaryentry,
-          },
-          {
-            "linkId" : "2.2",    //speichert private Tagebucheinträge unter linkID 2.2
-            "text" : privatediaryentry,
-          }]
-        }
-      ]
-    };
-
-    try {
-      final resp = await dio.post("/rls/response/",   //verwendet dio das in dio_setup erstellt wurde
-        data: body,
-      );
-
-      if (resp.statusCode == 200) {
-          //wenn Fragebogen erfolgreich gesendet und eine Antwort vom Backend erhalten wurde
-          djangotagebuchresponse = resp.data;
-          score = djangotagebuchresponse?["score"];   //Score aus der Antwort wird in Variable score gepeichert
-          interpretation = djangotagebuchresponse?["interpretation"]; //Interpretation aus der Antwort wird in Variable interpretation gespeichert
-
-      }
-
-      debugPrint("Antwort vom Server:");
-      debugPrint(resp.data);//Ausgabe in der Debug-Konsole
-    } catch (e) {
-      print('Fehler beim Speicher der Fragebogen-Antwort: $e');
-    }
-
-  }
-
 
 
   //-------------------Pop-Up Fenster das den Score anzeigt----------------------------------------------
-  Future<void> showMyDialog() async {
+  Future<void> showMyDialog(int maxScore) async {
   return showDialog<void>(
     context: context,
     barrierDismissible: false, // Benutzer muss den Knopf drücken um weiter zu kommen
@@ -160,8 +53,8 @@ class _TagebuchAuswahlScreenState extends State<TagebuchAuswahlScreen> {
         content: SingleChildScrollView(
           child: ListBody(
             children: <Widget>[
-              Text('Ihr Score ist $score/$maxscore!', style: TextStyle(fontSize: 20), textAlign: TextAlign.center,), //Text des Pop-up Fensters
-              Text(' -> $interpretation', textAlign: TextAlign.center,),
+              Text('Ihr Score ist ${_result?.score}/$maxScore!', style: TextStyle(fontSize: 20), textAlign: TextAlign.center,), //Text des Pop-up Fensters
+              Text(' -> ${_result?.interpretation}', textAlign: TextAlign.center,),
             ],
           ),
         ),
@@ -181,24 +74,42 @@ class _TagebuchAuswahlScreenState extends State<TagebuchAuswahlScreen> {
     );
   }
 
+  Future<void> _sendResponse(Map<String, dynamic> questionnaire) async {
+    try {
+      final service = ref.read(questionnaireServiceProvider);
+      final result = await service.submitResponse(
+        id: widget.id,
+        questionnaire: questionnaire,
+        answers: _answers,
+        publicEntry: publicController.text.trim(),
+        privateEntry: privateController.text.trim(),
+      );
+      if (!mounted) return;
+      setState(() => _result = result);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Fehler beim Speichern: $e')),
+      );
+    }
+  }
+
 
   // ------------------------------- Build Methode ------------------------------------------------------------------------------
   @override
   Widget build(BuildContext context) {
-    if (loading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    if (error != null) {
-      return Scaffold(
-        body: Center(child: Text(error!)),
-      );
-    }
+    final questionnaireAsync = ref.watch(questionnaireDefinitionProvider(widget.id));
+    return questionnaireAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, stackTrace) => Center(child: Text(error.toString())),
+      data: (questionnaire) => _buildcontent(questionnaire),
+    );
+  }
 
     // Fragen aus dem Fragebogen holen
-    final items = (questionnaire?['item'] as List?)?[2]?['item'] as List? ?? [];
+  Widget  _buildcontent(Map<String, dynamic> questionnaire) {
+    final maxScore = questionnaire["item"][0]["extension"][0]["valueInteger"] as int? ?? 0;
+    final items = (questionnaire['item'] as List?)?[2]?['item'] as List? ?? [];
 
     return Scaffold(
       appBar: AppBar(
@@ -254,14 +165,39 @@ class _TagebuchAuswahlScreenState extends State<TagebuchAuswahlScreen> {
           // Button zum Absenden der Antworten
           ElevatedButton(
             onPressed: () async {
-                await sendtagebuchresponse();  //Button wartet bis sendtagebuchresponse (Funktion die Antworten zum Django Backend sendet) abgeschlossen ist
-                showMyDialog(); //wenn sendtagebuchresponse fertig ist (=wenn Score unter int score gespeichert ist), wird Pop Up angezeigt 
+              if (antwortenVollstaendig(items) == false) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Sie haben einige Fragen nicht beantwortet.\nBitte füllen Sie den Fragebogen vollständig aus.')),
+                );
+              }
+              else {
+                try{
+                  await _sendResponse(questionnaire);
+                  if (!mounted) return;
+                  showMyDialog(maxScore);
+                }catch(e){
+                  if(!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Fehler beim Speichern:  $e')),
+                  );
+                }
+              }
             },
             child: const Text("Antworten senden"),
           ),
         ],
       ),
     );
+  }
+
+  bool antwortenVollstaendig(List<dynamic> items) {
+    for (final item in items) {
+      final linkId = item["linkId"];
+      if (!_answers.containsKey(linkId)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   // ------------------------ Methode die Eingabefeld für die Choice-Fragen baut --------------------------------------------
@@ -278,17 +214,20 @@ class _TagebuchAuswahlScreenState extends State<TagebuchAuswahlScreen> {
         children: [
           Text(text, style: const TextStyle(fontWeight: FontWeight.bold)), //Frage anzeigen
           //Für jede Option einen Button erstellen
-          for (final opt in options)
-            RadioListTile<String>(
-              title: Text(opt.substring(1)),  //Zeigt die erste Stelle der AntwortOptionen (=den Score-Wert) nicht mit an
-              value: opt,
-              groupValue: answers[linkId],
-              onChanged: (value) {
-                setState(() {
-                  answers[linkId] = value!;
-                });
-              },
+          RadioGroup<String>(
+            groupValue: _answers[linkId],
+            onChanged: (value) {
+              if (value != null) {
+                setState(() => _answers[linkId] = value);
+              }
+            },
+            child: Column(
+              children: options.map((opt) => RadioListTile<String>(
+                value: opt,
+                title: Text(opt.substring(1)),
+              )).toList(),
             ),
+          ),
           const SizedBox(height: 12),
         ],
     );

@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+/// A screen that provides educational information about RLS and links to external resources.
+///
+/// Features information sections and a button to visit the official RLS website.
 class InfosScreen extends StatelessWidget {
-  static final Uri rlsUrl = Uri.parse('https://www.restless-legs.org'); /// URL der RLS-Website als Uri
+  /// The URI for the official RLS website.
+  static final Uri rlsUrl = Uri.parse('https://www.restless-legs.org');
 
-  Future<void> openRlsWebsite() async {       // Öffnet die RLS-Webseite im externen Browser 
+  const InfosScreen({super.key});
+
+  /// Asynchronously opens the RLS website in an external browser.
+  Future<void> openRlsWebsite() async {
     if (!await launchUrl(rlsUrl, mode: LaunchMode.externalApplication)) {
       throw Exception('Konnte die Website nicht öffnen.');
     }

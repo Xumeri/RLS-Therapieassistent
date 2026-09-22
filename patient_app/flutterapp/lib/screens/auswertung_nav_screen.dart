@@ -2,8 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutterapp/screens/auswertung_fragebogen_screen.dart';
 import 'package:flutterapp/screens/auswertung_tagebuch_screen.dart';
 
+/// A navigation screen for selecting the type of evaluation to view.
+///
+/// Allows the user to choose between viewing diary or questionnaire evaluations.
 class AuswertungScreen extends StatelessWidget {
+  /// The title of the screen.
   final String title = "Auswertung auswählen:";
+
+  const AuswertungScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
