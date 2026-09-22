@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 
 import 'package:flutterapp/screens/login_screen.dart';
 import 'package:flutterapp/services/jwt_service.dart';
@@ -73,7 +75,7 @@ class EinstellungenScreen extends ConsumerWidget {
                 child: ListTile(
                   leading: const Icon(Icons.lock_outline),
                   title: const Text('Passwort ändern'),
-                  onTap: () => _openChangePasswordDialog(context,ref),
+                  onTap: () => _openChangePasswordDialog(context, ref),
                 ),
               ),
 
@@ -87,26 +89,46 @@ class EinstellungenScreen extends ConsumerWidget {
               const SizedBox(height: 8),
 
               Card(
-                child: Column(
-                  children: [
-                    ListTile(
-                      title: const Text('Datenschutzerklärung'),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () {},
-                    ),
-                    const Divider(height: 0),
-                    ListTile(
-                      title: const Text('Nutzungsbedingungen'),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () {},
-                    ),
-                    const Divider(height: 0),
-                    ListTile(
-                      title: const Text('Impressum'),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () {},
-                    ),
-                  ],
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.info_outline),
+                        label: const Text('Impressum'),
+                        onPressed: () => _showLegalContent(
+                          context,
+                          'Impressum',
+                          'assets/legal/de/imprint.md',
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      // 2. Button: Datenschutzerklärung
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.security),
+                        label: const Text('Datenschutzerklärung'),
+                        onPressed: () => _showLegalContent(
+                          context,
+                          'Datenschutzerklärung',
+                          'assets/legal/de/privacy_policy.md',
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      // 3. Button: AGB
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.description),
+                        label: const Text('AGB'),
+                        onPressed: () => _showLegalContent(
+                          context,
+                          'Allgemeine Geschäftsbedingungen',
+                          'assets/legal/de/terms_of_service.md',
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
 
@@ -122,6 +144,18 @@ class EinstellungenScreen extends ConsumerWidget {
                 icon: const Icon(Icons.logout),
                 label: const Text('Abmelden'),
               ),
+              const SizedBox(height: 12),
+
+              /// Button zum Löschen des Accounts.
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () => _delete(context, ref),
+                icon: const Icon(Icons.delete_forever),
+                label: const Text('Account löschen'),
+              ),
             ],
           ),
         );
@@ -136,20 +170,21 @@ class EinstellungenScreen extends ConsumerWidget {
   Future<void> _logout(BuildContext context) async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Abmelden'),
-        content: const Text('Möchten Sie sich wirklich abmelden?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Abbrechen'),
+      builder: (context) =>
+          AlertDialog(
+            title: const Text('Abmelden'),
+            content: const Text('Möchten Sie sich wirklich abmelden?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Abbrechen'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Abmelden'),
+              ),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Abmelden'),
-          ),
-        ],
-      ),
     );
 
     if (confirm != true) return;
@@ -157,7 +192,7 @@ class EinstellungenScreen extends ConsumerWidget {
     /// Löscht das AccessToken aus dem sicheren Speicher.
 
     await jwtService.logout();
-    if(!context.mounted) return;
+    if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Sie wurden abgemeldet.')),
     );
@@ -166,8 +201,59 @@ class EinstellungenScreen extends ConsumerWidget {
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (_) => LoginScreen()),
-      (route) => false,
+          (route) => false,
     );
+  }
+
+  /// Löscht das Benutzerkonto dauerhaft aus dem System.
+  ///
+  /// Fragt den Benutzer über einen [AlertDialog] nach einer Bestätigung.
+  /// Bei Zustimmung wird das Konto über das Patienten-Service gelöscht,
+  /// der Token entfernt und der Benutzer zum [LoginScreen] zurückgeleitet.
+  Future<void> _delete(BuildContext context, WidgetRef ref) async {
+    final service = ref.read(patientServiceProvider);
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) =>
+          AlertDialog(
+            title: const Text('Account löschen'),
+            content: const Text('Möchten Sie wirklich diesen Account löschen?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Abbrechen'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Löschen'),
+              ),
+            ],
+          ),
+    );
+
+    if (confirm != true) return;
+
+    var success = await service.deleteAccount();
+    if (!context.mounted) return;
+    if (success) {
+      await jwtService.logout();
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ihr Account wurde gelöscht')),
+      );
+
+      /// Leert den Navigationsstapel und öffnet den Login-Screen.
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => LoginScreen()),
+            (route) => false,
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text(
+            'Das Löschen des Accounts fehlgeschlagen. Versuchen Sie es später noch einmal.')),
+      );
+    }
   }
 
 
@@ -179,78 +265,175 @@ class EinstellungenScreen extends ConsumerWidget {
     final confirmPasswordController = TextEditingController();
     final service = ref.read(patientServiceProvider);
     showDialog(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(builder: (context, setDialogState){
-
-          return AlertDialog(
-            title: const Text('Passwort ändern'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: oldPasswordController,
-                  obscureText: true,
-                  decoration: InputDecoration(labelText: 'Aktuelles Passwort'),
-                ),
-                TextField(
-                  controller: newPasswordController,
-                  obscureText: true,
-                  decoration: InputDecoration(labelText: 'Neues Passwort'),
-                ),
-                TextField(
-                  controller: confirmPasswordController,
-                  obscureText: true,
-                  decoration: InputDecoration(labelText: 'Passwort bestätigen'),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Abbrechen'),
+        context: context,
+        builder: (context) {
+          return StatefulBuilder(builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Passwort ändern'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: oldPasswordController,
+                    obscureText: true,
+                    decoration: InputDecoration(
+                        labelText: 'Aktuelles Passwort'),
+                  ),
+                  TextField(
+                    controller: newPasswordController,
+                    obscureText: true,
+                    decoration: InputDecoration(labelText: 'Neues Passwort'),
+                  ),
+                  TextField(
+                    controller: confirmPasswordController,
+                    obscureText: true,
+                    decoration: InputDecoration(
+                        labelText: 'Passwort bestätigen'),
+                  ),
+                ],
               ),
-              ElevatedButton(
-                onPressed: () async{
-                  final oldPasswordText = oldPasswordController.text.trim();
-                  final newPasswordText = newPasswordController.text.trim();
-                  final confirmPasswordText = confirmPasswordController.text.trim();
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Abbrechen'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    final oldPasswordText = oldPasswordController.text.trim();
+                    final newPasswordText = newPasswordController.text.trim();
+                    final confirmPasswordText = confirmPasswordController.text
+                        .trim();
 
-                  if(oldPasswordText.isEmpty || newPasswordText.isEmpty){
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Bitte alle Felder ausfüllen'))
-                    );
-                    return;
-                  }
-                  if(confirmPasswordText != newPasswordText){
-                    ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Passwörter stimmen nicht überein'))
-                    );
-                    return;
-                  }
-                    var success = await service.changePassword(oldPasswordText, newPasswordText);
-                    if(success){
-                      if(!context.mounted) return;
+                    if (oldPasswordText.isEmpty || newPasswordText.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text(
+                              'Bitte alle Felder ausfüllen'))
+                      );
+                      return;
+                    }
+                    if (confirmPasswordText != newPasswordText) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text(
+                              'Passwörter stimmen nicht überein'))
+                      );
+                      return;
+                    }
+                    var success = await service.changePassword(
+                        oldPasswordText, newPasswordText);
+                    if (success) {
+                      if (!context.mounted) return;
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Passwort wurde erfolgreich geändert')),
+                        const SnackBar(content: Text(
+                            'Passwort wurde erfolgreich geändert')),
                       );
-                    }else{
-                      if(!context.mounted) return;
+                    } else {
+                      if (!context.mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Das Passwort konnte nicht geändert werden. Versuchen Sie es später noch einmal.')),
+                        const SnackBar(content: Text(
+                            'Das Passwort konnte nicht geändert werden. Versuchen Sie es später noch einmal.')),
                       );
                     }
                   },
-                child: const Text('Passwort ändern'),
-              ),
-            ],
-          );
-        });
-      }).then((_){
-        oldPasswordController.dispose();
-        newPasswordController.dispose();
-        confirmPasswordController.dispose();
+                  child: const Text('Passwort ändern'),
+                ),
+              ],
+            );
+          });
+        }).then((_) {
+      oldPasswordController.dispose();
+      newPasswordController.dispose();
+      confirmPasswordController.dispose();
     });
+  }
+
+  /// Öffnet ein modales BottomSheet zur Anzeige von rechtlichen Texten im Markdown-Format.
+  ///
+  /// Lädt die entsprechende `.md`-Datei asynchron über [assetPath] und stellt sie
+  /// mithilfe von [MarkdownBody] in einer scrollbaren Ansicht ([DraggableScrollableSheet]) dar.
+  /// 
+  /// [title] bestimmt die Kopfzeile des geöffneten Fensters.
+  void _showLegalContent(BuildContext context, String title, String assetPath) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.0)),
+      ),
+      builder: (context) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.8,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          expand: false,
+          builder: (context, scrollController) {
+            return Column(
+              children: [
+
+                Container(
+                  margin: const EdgeInsets.symmetric(vertical: 10),
+                  height: 5,
+                  width: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 16),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(),
+
+                Expanded(
+                  child: FutureBuilder<String>(
+                    future: rootBundle.loadString(assetPath),
+                    // Lädt die Datei aus den Assets
+                    builder: (context, snapshot) {
+                      // Während die Datei geladen wird: Ladebalken anzeigen
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+
+                      if (snapshot.hasError) {
+                        return const Center(
+                          child: Text('Fehler beim Laden der Datei.'),
+                        );
+                      }
+
+                      return ListView(
+                        controller: scrollController,
+                        padding: const EdgeInsets.all(16.0),
+                        children: [
+                          MarkdownBody(data: snapshot.data ?? ''),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 }

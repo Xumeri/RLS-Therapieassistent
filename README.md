@@ -110,13 +110,15 @@ Screen → ref.watch(provider) → Provider → Repository → Django API → FH
 | Methode | URL | Beschreibung |
 |---|---|---|
 | POST | `/api/token/` | Login, gibt JWT zurück |
-| POST | `/api/signup/` | Neuen Patienten registrieren |
-| GET | `/rls/questionnaire/{id}` | Fragebogen laden |
-| POST | `/rls/response/` | Fragebogen-Antwort speichern |
-| GET | `/rls/diagramm/{id}` | Auswertungsdaten laden |
-| GET | `/rls/getresponse/{date}` | Fragebogen-Antworten eines Tages |
-| GET | `/rls/gettagebuchresponse/{date}` | Tagebucheinträge eines Tages |
-| GET | `/rls/profil/` | Patientenprofil laden |
+| POST | `/api/register/` | Neuen Patienten registrieren |
+| GET | `/api/rls/questionnaire/{id}` | Fragebogen laden |
+| POST | `/api/rls/response/` | Fragebogen-Antwort speichern |
+| GET | `/api/rls/diagramm/{id}` | Auswertungsdaten laden |
+| GET | `/api/rls/getresponse/{date}` | Fragebogen-Antworten eines Tages |
+| GET | `/api/rls/gettagebuchresponse/{date}` | Tagebucheinträge eines Tages |
+| GET | `/api/rls/profil/` | Patientenprofil laden |
+| POST | `/api/rls/patient/` | FHIR Patient-Ressource anlegen |
+| POST | `/api/rls/change-password/` | Passwort ändern |
 
 ---
 
