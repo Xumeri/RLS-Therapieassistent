@@ -46,7 +46,7 @@ RLSApp/
 - Python 3.9+
 - Flutter SDK 3.x+
 - Android Studio oder VS Code
-- Zugang zum Firely FHIR-Server (intern – Zugangsdaten beim Betreuer erfragen)
+- Zugang zum Firely FHIR-Server (intern)
 
 ---
 
